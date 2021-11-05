@@ -1,10 +1,4 @@
-package person
-
-type Task struct{} // just for no errors
-
-func (t *Task) isDone() bool {
-	return true
-}
+package entities
 
 // func init() {
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	ent "goGo/Entities"
+	ent "./Entities"
 	// Task	"goGo/Entities"
 	"fmt"
 	"math/rand"
@@ -18,9 +18,9 @@ func main() {
 }
 
 func createPerson(name, email string) ent.Person {
-	return ent.Person{Id: strconv.Itoa(rand.Intn(10000)), Name: name, Email: email, Tasklist: nil}
+	return ent.Person{Id: strconv.Itoa(rand.Intn(10000)), Name: name, Email: email, Tasks: nil}
 }
 
 func addPerson(person ent.Person) {
-	append(persons, person)
+	persons = append(persons, person)
 }
