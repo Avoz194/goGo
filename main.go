@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"strconv"
 
-	ent "github.com/yagi1/goGo/entities"
+	ent "github.com/Avoz194/goGo/entities"
 )
 
 var persons = []ent.Person{}
@@ -17,12 +17,6 @@ func main() {
 	addPerson(p2)
 
 	fmt.Println(persons)
-
-	// doest recoganize new field
-	t1 := ent.Task{Name: "task1"}
-
-	p1.addTask(t1)
-
 }
 
 func createPerson(name, email string) ent.Person {
