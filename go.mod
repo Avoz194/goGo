@@ -1,3 +1,3 @@
-module github.com/yagi1/goGo
+module github.com/Avoz194/goGo
 
 go 1.17
