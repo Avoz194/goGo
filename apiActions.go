@@ -63,3 +63,58 @@ func addNewTask(id string){
 	// if person exist*************************************************
 	getPerson(id).AddTask(task)
 }
+
+func addTask(task ent.Task) {
+	tasks = append(tasks, task)
+}
+//RaiseError if no TaskID
+func getTaskDetails(taskId string) ent.Task {
+	for _,task:= range tasks{
+		if task.Id==taskId {
+			return task
+		}
+	}
+	return ent.Task{}
+}
+
+func setTaskDetails(taskID string) {
+	var task = getTaskDetails(taskID)
+}
+
+func removeTask(id string) {
+	indexToRemove := -1
+	for index,task := range tasks {
+		if task.Id == id
+		{
+			indexToRemove = index
+			break
+		}
+	}
+	if indexToRemove >0{
+		tasks[indexToRemove] = tasks[len(tasks)-1]
+	}
+}
+
+func getStatusForTask(taskId string) ent.Status{
+	var task = getTaskDetails(taskId)
+	return task.Status
+}
+
+func getOwnerForTask(taskId string) string{
+	var task = getTaskDetails(taskId)
+	return task.OwnerId
+}
+
+//Validate Owner ID
+func setTaskOwner(taskId string, ownerID string){
+	var task = getTaskDetails(taskId)
+	if (getOwner(ownerID)!= -1) {
+		task.OwnerId = ownerID
+	}
+}
+
+func setTaskStatus(taskId string, status string){
+	var task = getTaskDetails(taskId)
+	var stat = ent.CreateStatus(status)
+	task.Status = stat
+}

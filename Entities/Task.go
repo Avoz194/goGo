@@ -1,34 +1,24 @@
 package entities
 
 import (
+	"math/rand"
+	"strconv"
 	"time"
 )
 
 type Task struct {
-	id      string
-	title   string
-	ownerId string
-	details string
-	status  Status
-	dueDate time.Time
+	Id      string
+	Title   string
+	OwnerId string
+	Details string
+	Status  Status
+	DueDate time.Time
 }
 
-func (t *Task) setOwner(newOwnerid string) {
-	t.ownerId = newOwnerid
+func (t *Task) IsDone() bool {
+	return t.Status.isDone()
 }
 
-func (t *Task) setStatus(newStatus Status) {
-	t.status = newStatus
-}
-
-func (t *Task) isDone() bool {
-	return t.status.isDone()
-}
-
-func (t *Task) getStatus() Status {
-	return t.status
-}
-
-func (t *Task) getOwnerID() string {
-	return t.ownerId
+func CreateTask(title string, ownerID string, details string, status Status, dueDate time.Time) Task {
+	return Task{Id: strconv.Itoa(rand.Intn(10000)), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
 }
