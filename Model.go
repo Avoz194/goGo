@@ -90,7 +90,7 @@ func removeTask(id string) {
 			break
 		}
 	}
-	if indexToRemove >0{
+	if indexToRemove >-1{
 		tasks[indexToRemove] = tasks[len(tasks)-1]
 	}
 }
