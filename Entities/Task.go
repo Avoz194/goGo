@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"github.com/google/uuid"
 )
 
 type Task struct {
@@ -20,5 +21,6 @@ func (t *Task) IsDone() bool {
 }
 
 func CreateTask(title string, ownerID string, details string, status Status, dueDate time.Time) Task {
-	return Task{Id: strconv.Itoa(rand.Intn(10000)), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
+	id := uuid.New()
+	return Task{Id: id.String(), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
 }
