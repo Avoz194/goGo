@@ -5,7 +5,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"os"
 	ent "github.com/Avoz194/goGo/entities"
-
 )
 
 const IP = "127.0.0.1:3306"
@@ -218,4 +217,57 @@ func UpdatePerson(p ent.Person) ent.Person{
 		panic(err)
 	}
 	return person
+}
+
+func GetPersonsTasks(p ent.Person) []ent.Task {
+
+	db := openConnection()
+	if db==nil {
+		return []ent.Task{}
+	}
+
+	defer db.Close()
+
+	results, err := db.Query("SELECT * FROM Tasks where ownerid = ?",p.Id)
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+
+	tasksList := []ent.Task{}
+	for results.Next() {
+		var task ent.Task
+		// for each row, scan the result into our tag composite object
+		err = results.Scan(&task.Id, &task.Title, &task.OwnerId, &task.Status, &task.DueDate)
+		if err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+		tasksList = append(tasksList, task)
+	}
+	return tasksList
+}
+
+func GetAllPersons() []ent.Person {
+	db := openConnection()
+	if db==nil {
+		return []ent.Person{}
+	}
+
+	defer db.Close()
+
+	results, err := db.Query("SELECT * FROM Persons")
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+
+	personList := []ent.Person{}
+	for results.Next() {
+		var person ent.Person
+		// for each row, scan the result into our tag composite object
+		err = results.Scan(&person.Id, &person.Name, &person.Email)
+		if err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+		personList = append(personList, person)
+	}
+	return personList
 }
