@@ -219,7 +219,7 @@ func UpdatePerson(p ent.Person) ent.Person{
 	return person
 }
 
-func GetPersonsTasks(p ent.Person) []ent.Task {
+func GetPersonTasks(p ent.Person) []ent.Task {
 
 	db := openConnection()
 	if db==nil {
