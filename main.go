@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	ent "github.com/Avoz194/goGo/entities"
+	api "github.com/Avoz194/goGo/APIHandler"
 	db "github.com/Avoz194/goGo/DBHandler"
-"os"
+	ent "github.com/Avoz194/goGo/entities"
+
+	"os"
 )
 
 var persons = []ent.Person{}
@@ -16,8 +18,8 @@ func main() {
 	os.Setenv("MYSQL_DBPASS", "123456goGO")
 	db.CreateDatabase()
 
-	addPerson("Gilsss", "ss")
-	addPerson("aviv", "dd")
+	api.CreateServer()
+
 
 	fmt.Println(persons)
 }

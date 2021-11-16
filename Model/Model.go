@@ -1,54 +1,44 @@
-package main
+package model
 
 import (
+	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
+	"time"
 )
 
-func addPerson(name, email string) {
+func AddPerson(name, email string) ent.Person {
 	person := ent.CreatePerson(name, email)
-	persons = append(persons, person)
+	db.AddPerson(person)
+	//the db fun also return a person, which one should return?
+	return person
 }
 
 // returning list of person, should return a list of person in json probably
 // need to protect from corruption (only admins)
-func getAllPersons() []ent.Person{
-	return persons
+func GetAllPersons() []ent.Person{
+	return db.GetAllPersons()
 }
 
-func getPerson(id string) ent.Person{
-	for _, person := range persons {
-		if person.Id == id {
-			return person
-		}
-	}
-	//persons id not found, should return error **************************
+func GetPerson(id string) ent.Person{
+	return db.GetPerson(id)
 }
 
 func getPersonDetails(id string) ent.Person{
-	return getPerson(id)
+	return GetPerson(id)
 	// may get an error*****************************************
 }
 
 //need to check how do we get the details (json?)
-func setPersonDetails(id string){
-	for i, person := range persons {
-		if person.Id == id {
-			persons[i] =
-			break
-		}
-	}
+func SetPersonDetails(id string) ent.Person{
+
+
 }
 //should return error if id not exist?
-func removePerson(id string){
-	for i, person := range persons {
-		if person.Id == id {
-			persons[i] = persons[len(persons)-1]
-			persons = persons[:len(persons) -1]
-		}
-	}
+func RemovePerson(id string){
+	db.DeletePerson()
 }
 
-func getPersonTasks(id string) []ent.Task{
+func GetPersonTasks(id string) []ent.Task{
 	tasksList := []ent.Task{}
 	// if person exist*************************************************
 	for _, taskid := range getPerson(id).TasksId{
@@ -57,7 +47,7 @@ func getPersonTasks(id string) []ent.Task{
 	return tasksList
 }
 
-func addNewTask(id string){
+func AddNewTask(personId, title , details string, status ent.Status, dueDate time.Time  ) ent.Task{
 	//create task with details
 	task := CreateTask()
 	// if person exist*************************************************
@@ -65,25 +55,25 @@ func addNewTask(id string){
 }
 
 func addTask(task ent.Task) {
-	tasks = append(tasks, task)
+	main.tasks = append(main.tasks, task)
 }
 //RaiseError if no TaskID
-func getTaskDetails(taskId string) ent.Task {
-	for _,task:= range tasks{
+func GetTaskDetails(taskId string) ent.Task {
+	for _,task:= range main.tasks {
 		if task.Id==taskId {
 			return task
 		}
 	}
 	return ent.Task{}
 }
-
-func setTaskDetails(taskID string) {
+//added all the needed params
+func SetTaskDetails(taskID , title , details string, status ent.Status, dueDate time.Time) ent.Task {
 	var task = getTaskDetails(taskID)
 }
 
-func removeTask(id string) {
+func RemoveTask(id string) {
 	indexToRemove := -1
-	for index,task := range tasks {
+	for index,task := range main.tasks {
 		if task.Id == id
 		{
 			indexToRemove = index
@@ -91,29 +81,29 @@ func removeTask(id string) {
 		}
 	}
 	if indexToRemove >-1{
-		tasks[indexToRemove] = tasks[len(tasks)-1]
+		main.tasks[indexToRemove] = main.tasks[len(main.tasks)-1]
 	}
 }
 
-func getStatusForTask(taskId string) ent.Status{
+func GetStatusForTask(taskId string) ent.Status{
 	var task = getTaskDetails(taskId)
 	return task.Status
 }
 
-func getOwnerForTask(taskId string) string{
+func GetOwnerForTask(taskId string) string{
 	var task = getTaskDetails(taskId)
 	return task.OwnerId
 }
 
 //Validate Owner ID
-func setTaskOwner(taskId string, ownerID string){
+func SetTaskOwner(taskId string, ownerID string){
 	var task = getTaskDetails(taskId)
 	if (getOwner(ownerID)!= -1) {
 		task.OwnerId = ownerID
 	}
 }
 
-func setTaskStatus(taskId string, status string){
+func SetTaskStatus(taskId string, status string){
 	var task = getTaskDetails(taskId)
 	var stat = ent.CreateStatus(status)
 	task.Status = stat
