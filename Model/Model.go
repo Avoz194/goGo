@@ -8,9 +8,7 @@ import (
 
 func AddPerson(name, email string) ent.Person {
 	person := ent.CreatePerson(name, email)
-	db.AddPerson(person)
-	//the db fun also return a person, which one should return?
-	return person
+	return db.AddPerson(person)
 }
 
 // returning list of person, should return a list of person in json probably
@@ -29,82 +27,68 @@ func getPersonDetails(id string) ent.Person{
 }
 
 //need to check how do we get the details (json?)
-func SetPersonDetails(id string) ent.Person{
-
-
+func SetPersonDetails(id, name, email string) ent.Person{
+	p := GetPerson(id)
+	// we should decide how we want to make no change (maybe null), and how to delete (maybe "").
+	p.Email = email
+	p.Name = name
+	return db.UpdatePerson(p)
 }
 //should return error if id not exist?
 func RemovePerson(id string){
-	db.DeletePerson()
+	db.DeletePerson(GetPerson(id))
 }
 
 func GetPersonTasks(id string) []ent.Task{
-	tasksList := []ent.Task{}
-	// if person exist*************************************************
-	for _, taskid := range getPerson(id).TasksId{
-		tasksList = append(tasksList, getTaskDetails(taskid))
-	}
-	return tasksList
+	return db.GetPersonTasks(GetPerson(id))
 }
 
 func AddNewTask(personId, title , details string, status ent.Status, dueDate time.Time  ) ent.Task{
-	//create task with details
-	task := CreateTask()
-	// if person exist*************************************************
-	getPerson(id).AddTask(task)
+	task := ent.CreateTask(title, personId, details, status, dueDate)
+	return db.AddTask(task)
 }
 
-func addTask(task ent.Task) {
-	main.tasks = append(main.tasks, task)
-}
+//func addTask(task ent.Task) {
+//	main.tasks = append(main.tasks, task)
+//}
+
 //RaiseError if no TaskID
 func GetTaskDetails(taskId string) ent.Task {
-	for _,task:= range main.tasks {
-		if task.Id==taskId {
-			return task
-		}
-	}
-	return ent.Task{}
+	return db.GetTask(taskId)
 }
-//added all the needed params
 func SetTaskDetails(taskID , title , details string, status ent.Status, dueDate time.Time) ent.Task {
-	var task = getTaskDetails(taskID)
+	t := GetTaskDetails(taskID)
+	t.Title = title
+	t.Details = details
+	t.Status = status
+	t.DueDate = dueDate
+	return db.UpdateTask(t)
 }
 
 func RemoveTask(id string) {
-	indexToRemove := -1
-	for index,task := range main.tasks {
-		if task.Id == id
-		{
-			indexToRemove = index
-			break
-		}
-	}
-	if indexToRemove >-1{
-		main.tasks[indexToRemove] = main.tasks[len(main.tasks)-1]
-	}
+	db.DeleteTask(GetTaskDetails(id))
 }
 
 func GetStatusForTask(taskId string) ent.Status{
-	var task = getTaskDetails(taskId)
+	var task = GetTaskDetails(taskId)
 	return task.Status
 }
 
 func GetOwnerForTask(taskId string) string{
-	var task = getTaskDetails(taskId)
+	var task = GetTaskDetails(taskId)
 	return task.OwnerId
 }
 
 //Validate Owner ID
 func SetTaskOwner(taskId string, ownerID string){
-	var task = getTaskDetails(taskId)
-	if (getOwner(ownerID)!= -1) {
-		task.OwnerId = ownerID
-	}
+	var task = GetTaskDetails(taskId)
+	task.OwnerId = ownerID
+	db.UpdateTask(task)
 }
 
 func SetTaskStatus(taskId string, status string){
-	var task = getTaskDetails(taskId)
+	var task = GetTaskDetails(taskId)
 	var stat = ent.CreateStatus(status)
 	task.Status = stat
+	db.UpdateTask(task)
 }

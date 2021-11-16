@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
 	"os"
-	ent "github.com/Avoz194/goGo/entities"
+	ent "github.com/Avoz194/goGo/Entities"
 )
 
 const IP = "127.0.0.1:3306"

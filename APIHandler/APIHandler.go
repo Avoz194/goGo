@@ -26,7 +26,7 @@ type TaskHolder struct {
 func CreateServer() *mux.Router{
 	server := mux.NewRouter()
 
-	server.HandleFunc("/people/", addPerson).Methods("POST")
+	server.HandleFunc("/people", addPerson).Methods("POST")
 	server.HandleFunc("/people/", getPeople).Methods("GET")
 	server.HandleFunc("/people/{id}", getPerson).Methods("GET")
 	server.HandleFunc("/people/{id}", updatePerson).Methods("PATCH")
@@ -40,13 +40,14 @@ func CreateServer() *mux.Router{
 	server.HandleFunc("/tasks/{id}/status", setTaskStatus).Methods("PUT")
 	server.HandleFunc("/tasks/{id}/owner", getOwnerId).Methods("GET")
 	server.HandleFunc("/tasks/{id}/owner", setOwner).Methods("PUT")
-
-	log.Fatal(http.ListenAndServe(":8000", server))
+	print("server on...")
+	log.Fatal(http.ListenAndServe(":8080", server))
 
 	return server
 }
 
 func addPerson(w http.ResponseWriter, r *http.Request) {
+	println("in add")
 	w.Header().Set("Content-Type", "application/json")
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(holder)
@@ -72,7 +73,9 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 func updatePerson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	p := mod.SetPersonDetails(params["id"])
+	var holder PersonHolder
+	json.NewDecoder(r.Body).Decode(holder)
+	p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email)
 	json.NewEncoder(w).Encode(p)
 }
 
