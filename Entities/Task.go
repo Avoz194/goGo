@@ -1,10 +1,8 @@
 package entities
 
 import (
-	"math/rand"
-	"strconv"
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type Task struct {
