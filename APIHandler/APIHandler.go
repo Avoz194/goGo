@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	ent "github.com/Avoz194/goGo/Entities"
 	mod "github.com/Avoz194/goGo/Model"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -25,10 +26,9 @@ type TaskHolder struct {
 
 func CreateServer() *mux.Router{
 	server := mux.NewRouter()
-	server.PathPrefix("/api/")
-	server.HandleFunc("people/", addPerson).Methods("POST")
-	server.HandleFunc("people/", getPeople).Methods("GET")
-	server.HandleFunc("people/{id}", getPerson).Methods("GET")
+	server.HandleFunc("/api/people/", addPerson).Methods("POST")
+	server.HandleFunc("/api/people/", getPeople).Methods("GET")
+	server.HandleFunc("/api/people/{id}", getPerson).Methods("GET")
 	server.HandleFunc("people/{id}", updatePerson).Methods("PATCH")
 	server.HandleFunc("people/{id}", deletePerson).Methods("DELETE")
 	server.HandleFunc("people/{id}/tasks/", getPersonTasks).Methods("GET")
@@ -41,7 +41,18 @@ func CreateServer() *mux.Router{
 	server.HandleFunc("tasks/{id}/owner", getOwnerId).Methods("GET")
 	server.HandleFunc("tasks/{id}/owner", setOwner).Methods("PUT")
 	print("\nserver on...")
-	log.Fatal(http.ListenAndServe(":8080", server))
+
+
+	headersOk := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers",
+		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"})
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:8080","*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "DELETE", "POST", "PUT", "PATCH"})
+	http.Handle("/", server)
+
+	fs := http.FileServer(http.Dir("./swaggerui/"))
+	server.PathPrefix("/swaggerui/").Handler(http.StripPrefix("/swaggerui/", fs))
+
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(server)))
 	print("\nserver on...")
 
 	return server
@@ -52,8 +63,9 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	p := mod.AddPerson(holder.Name, holder.Email)
-	json.NewEncoder(w).Encode(p)
+	//p := mod.AddPerson(holder.Name, holder.Email)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(holder)
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
