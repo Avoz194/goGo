@@ -2,14 +2,14 @@ package DBHandler
 
 import (
 	"database/sql"
+	ent "github.com/Avoz194/goGo/Entities"
 	"github.com/go-sql-driver/mysql"
 	"os"
-	ent "github.com/Avoz194/goGo/Entities"
 )
 
 const IP = "127.0.0.1:3306"
 const DATABASE_NAME = "goGODB"
-const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) NOT NULL, name varchar(50), email varchar(50), PRIMARY KEY (id));"
+const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) NOT NULL, name varchar(50), email varchar(50), PRIMARY KEY (id), PRIMARY KEY (email));"
 const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT NULL, title varchar(50), ownerId varchar(50) NOT NULL, details varchar(50), statusID int NOT NULL, dueDate date, PRIMARY KEY (id), CONSTRAINT FK_ownerId FOREIGN KEY (ownerId),REFERENCES Persons(id));"
 const CREATE_STATUS_TABLE = "CREATE TABLE IF NOT EXISTS Status(id varchar(10) NOT NULL, title varchar(50), PRIMARY KEY (id))"
 

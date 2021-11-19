@@ -21,11 +21,6 @@ func GetPerson(id string) ent.Person{
 	return db.GetPerson(id)
 }
 
-func getPersonDetails(id string) ent.Person{
-	return GetPerson(id)
-	// may get an error*****************************************
-}
-
 //need to check how do we get the details (json?)
 func SetPersonDetails(id, name, email string) ent.Person{
 	p := GetPerson(id)
@@ -47,10 +42,6 @@ func AddNewTask(personId, title , details string, status ent.Status, dueDate tim
 	task := ent.CreateTask(title, personId, details, status, dueDate)
 	return db.AddTask(task)
 }
-
-//func addTask(task ent.Task) {
-//	main.tasks = append(main.tasks, task)
-//}
 
 //RaiseError if no TaskID
 func GetTaskDetails(taskId string) ent.Task {
