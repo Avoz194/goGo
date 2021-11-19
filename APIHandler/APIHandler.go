@@ -53,13 +53,13 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	p := mod.AddPerson(holder.Name, holder.Email)
-	json.NewEncoder(w).Encode(&p)
+	json.NewEncoder(w).Encode(p)
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	people := mod.GetAllPersons()
-	json.NewEncoder(w).Encode(&people)
+	json.NewEncoder(w).Encode(people)
 }
 
 //need to add case of not exist
@@ -67,7 +67,7 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	p := mod.GetPerson(params["id"])
-	json.NewEncoder(w).Encode(&p)
+	json.NewEncoder(w).Encode(p)
 
 }
 
@@ -77,7 +77,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email)
-	json.NewEncoder(w).Encode(&p)
+	json.NewEncoder(w).Encode(p)
 }
 
 func deletePerson(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +91,7 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	tasks := mod.GetPersonTasks(params["id"])
-	json.NewEncoder(w).Encode(&tasks)
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func addNewTask(w http.ResponseWriter, r *http.Request) {
@@ -101,14 +101,14 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&holder)
 	t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
 
-	json.NewEncoder(w).Encode(&t)
+	json.NewEncoder(w).Encode(t)
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	t := mod.GetTaskDetails(params["id"])
-	json.NewEncoder(w).Encode(&t)
+	json.NewEncoder(w).Encode(t)
 }
 
 func updateTask(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +117,7 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
-	json.NewEncoder(w).Encode(&t)
+	json.NewEncoder(w).Encode(t)
 }
 
 func removeTask(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	s := mod.GetStatusForTask(params["id"])
-	json.NewEncoder(w).Encode(&s)
+	json.NewEncoder(w).Encode(s)
 }
 
 func setTaskStatus(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +145,7 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	id := mod.GetOwnerForTask(params["id"])
-	json.NewEncoder(w).Encode(&id)
+	json.NewEncoder(w).Encode(id)
 }
 
 func setOwner(w http.ResponseWriter, r *http.Request) {
