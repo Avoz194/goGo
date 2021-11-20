@@ -5,7 +5,7 @@ import (
     "reflect"
 )
 
-func NoSuchEntityError(ent interface{}, extraDetails, err error) error{
+func NoSuchEntityError(ent interface{}, extraDetails string, err error) error{
     entType := reflect.TypeOf(ent).Name()
     return fmt.Errorf("A %s with the %s doesn't exist. Error: %w", entType, extraDetails, err)
 }
