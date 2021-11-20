@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -46,8 +45,8 @@ func CreateServer() *mux.Router{
 
 	headersOk := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers",
 		"Accept", "X-Requested-With"})
-	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "DELETE", "POST", "PUT", "PATCH"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "DELETE", "POST", "PUT", "PATCH","OPTIONS"})
 	http.Handle("/", server)
 
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(server)))
