@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -44,13 +45,10 @@ func CreateServer() *mux.Router{
 
 
 	headersOk := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers",
-		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"})
-	originsOk := handlers.AllowedOrigins([]string{"http://localhost:8080","*"})
+		"Accept", "X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "DELETE", "POST", "PUT", "PATCH"})
 	http.Handle("/", server)
-
-	fs := http.FileServer(http.Dir("./swaggerui/"))
-	server.PathPrefix("/swaggerui/").Handler(http.StripPrefix("/swaggerui/", fs))
 
 	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(server)))
 	print("\nserver on...")
@@ -63,9 +61,9 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	//p := mod.AddPerson(holder.Name, holder.Email)
+	p := mod.AddPerson(holder.Name, holder.Email)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(holder)
+	json.NewEncoder(w).Encode(p)
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {

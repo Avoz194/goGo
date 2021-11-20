@@ -4,22 +4,21 @@ import (
 	"database/sql"
 	ent "github.com/Avoz194/goGo/Entities"
 	"github.com/go-sql-driver/mysql"
-	"os"
 )
 
 const IP = "127.0.0.1:3306"
 const DATABASE_NAME = "goGODB"
-const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) NOT NULL, name varchar(50), email varchar(50), PRIMARY KEY (id), PRIMARY KEY (email));"
-const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT NULL, title varchar(50), ownerId varchar(50) NOT NULL, details varchar(50), statusID int NOT NULL, dueDate date, PRIMARY KEY (id), CONSTRAINT FK_ownerId FOREIGN KEY (ownerId),REFERENCES Persons(id));"
-const CREATE_STATUS_TABLE = "CREATE TABLE IF NOT EXISTS Status(id varchar(10) NOT NULL, title varchar(50), PRIMARY KEY (id))"
+const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) NOT NULL, name varchar(50), email varchar(50), PRIMARY KEY (id,email));"
+const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT NULL, title varchar(50), ownerId varchar(50) NOT NULL, details varchar(50), statusID int NOT NULL, dueDate date, PRIMARY KEY (id), CONSTRAINT FK_ownerId FOREIGN KEY (ownerId) REFERENCES Persons(id));"
+const CREATE_STATUS_TABLE = "CREATE TABLE IF NOT EXISTS Status(id varchar(10) NOT NULL, title varchar(50), PRIMARY KEY (id));"
 
 func openConnection() *sql.DB {
 	cfg := mysql.Config{
-		User:   os.Getenv("MYSQL_DBUSER"),
-		Passwd: os.Getenv("MYSQL_DBPASS"),
+		User:   "root",
+		Passwd: "noMoreTests123!",
 		Net:    "tcp",
 		Addr:   IP,
-		DBName: "DATABASE_NAME",
+		DBName: DATABASE_NAME,
 	}
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
@@ -29,24 +28,20 @@ func openConnection() *sql.DB {
 }
 
 func CreateDatabase(){
-	db := openConnection()
-	if db != nil {
-		db.Close()
-		return
-	}
 	cfg := mysql.Config{
-		User:   os.Getenv("MYSQL_DBUSER"),
-		Passwd: os.Getenv("MYSQL_DBPASS"),
+		User:   "root",
+		Passwd: "noMoreTests123!",
 		Net:    "tcp",
 		Addr:   "127.0.0.1:3306",
 	}
-	db, err := sql.Open("mysql", cfg.FormatDSN())
+	db, err:= sql.Open("mysql", cfg.FormatDSN())
+
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	_, err = db.Exec("CREATE DATABASE " + DATABASE_NAME)
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME)
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +100,7 @@ func GetPerson(id string) ent.Person {
 
 	var p ent.Person
 
-	err := db.QueryRow("SELECT * FROM Persons where id ==?",id).Scan(&p.Id, &p.Name, &p.Email)
+	err := db.QueryRow("SELECT * FROM Persons where id = ?",id).Scan(&p.Id, &p.Name, &p.Email)
 	if err != nil {
 		panic(err)
 	}
@@ -122,7 +117,7 @@ func GetTask(id string) ent.Task {
 
 	var t ent.Task
 
-	err := db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id ==?",id).Scan(&t.Id, &t.Title, &t.OwnerId, &t.Details, &t.Status, &t.DueDate)
+	err := db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&t.Id, &t.Title, &t.OwnerId, &t.Details, &t.Status, &t.DueDate)
 	if err != nil {
 		panic(err)
 	}
@@ -135,19 +130,15 @@ func AddPerson(p ent.Person) ent.Person{
 		return ent.Person{}
 	}
 	defer db.Close()
-	q := "INSERT INTO Persons VALUES ( ?, ? ,? )"
+	q := "INSERT INTO Persons VALUES ( ?, ? ,? ) "
 	insertResult, err := db.Query(q, p.Id, p.Name, p.Email)
  	if err != nil {
 		panic(err.Error())
 	}
 	defer insertResult.Close()
 
-	var person ent.Person
-	err = insertResult.Scan(&person.Id, &person.Name, &person.Email)
-	if err != nil {
-		panic(err)
-	}
-	return person
+
+	return GetPerson(p.Id)
 }
 
 func AddTask(t ent.Task) ent.Task{
@@ -163,12 +154,7 @@ func AddTask(t ent.Task) ent.Task{
 	}
 	defer insertResult.Close()
 
-	var task ent.Task
-	err = insertResult.Scan(&task.Id, &task.Title, &task.OwnerId, &task.Status, &task.DueDate)
-	if err != nil {
-		panic(err)
-	}
-	return task
+	return GetTask(t.Id)
 }
 
 func UpdateTask(t ent.Task) ent.Task{
