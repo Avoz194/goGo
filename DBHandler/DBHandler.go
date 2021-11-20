@@ -3,7 +3,6 @@ package DBHandler
 import (
 	"database/sql"
 	ent "github.com/Avoz194/goGo/Entities"
-	model "github.com/Avoz194/goGo/Model"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -13,7 +12,7 @@ const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) N
 const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT NULL, title varchar(50), ownerId varchar(50) NOT NULL, details varchar(50), statusID int NOT NULL, dueDate date, PRIMARY KEY (id), CONSTRAINT FK_ownerId FOREIGN KEY (ownerId) REFERENCES Persons(id));"
 const CREATE_STATUS_TABLE = "CREATE TABLE IF NOT EXISTS Status(id varchar(10) NOT NULL, title varchar(50), PRIMARY KEY (id));"
 
-func openConnection() (*sql.DB,error) {
+func openConnection() *sql.DB {
 	cfg := mysql.Config{
 		User:   "root",
 		Passwd: "noMoreTests123!",
@@ -23,9 +22,9 @@ func openConnection() (*sql.DB,error) {
 	}
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
-		return nil, model.TechnicalFailrue("",err)
+		panic(err)
 	}
-	return db, nil
+	return db
 }
 
 func CreateDatabase(){
