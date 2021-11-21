@@ -2,14 +2,13 @@ package APIHandler
 
 import (
 	"encoding/json"
-	ent "github.com/Avoz194/goGo/Entities"
+	//ent "github.com/Avoz194/goGo/Entities"
 	mod "github.com/Avoz194/goGo/Model"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
 type PersonHolder struct {
@@ -20,8 +19,8 @@ type PersonHolder struct {
 type TaskHolder struct {
 	Title   string		`json:"title"`
 	Details string		`json:"details"`
-	DueDate time.Time	`json:"dueDate"`
-	Status 	ent.Status	`json:"status"`
+	DueDate string	`json:"dueDate"`
+	Status 	string	`json:"status"`
 }
 
 
@@ -30,17 +29,17 @@ func CreateServer() *mux.Router{
 	server.HandleFunc("/api/people/", addPerson).Methods("POST")
 	server.HandleFunc("/api/people/", getPeople).Methods("GET")
 	server.HandleFunc("/api/people/{id}", getPerson).Methods("GET")
-	server.HandleFunc("people/{id}", updatePerson).Methods("PATCH")
-	server.HandleFunc("people/{id}", deletePerson).Methods("DELETE")
-	server.HandleFunc("people/{id}/tasks/", getPersonTasks).Methods("GET")
-	server.HandleFunc("people/{id}/tasks/", addNewTask).Methods("POST")
-	server.HandleFunc("tasks/{id}", getTask).Methods("GET")
-	server.HandleFunc("tasks/{id}", updateTask).Methods("PATCH")
-	server.HandleFunc("tasks/{id}", removeTask).Methods("DELETE")
-	server.HandleFunc("tasks/{id}/status", getTaskStatus).Methods("GET")
-	server.HandleFunc("tasks/{id}/status", setTaskStatus).Methods("PUT")
-	server.HandleFunc("tasks/{id}/owner", getOwnerId).Methods("GET")
-	server.HandleFunc("tasks/{id}/owner", setOwner).Methods("PUT")
+	server.HandleFunc("/api/people/{id}", updatePerson).Methods("PATCH")
+	server.HandleFunc("/api/people/{id}", deletePerson).Methods("DELETE")
+	server.HandleFunc("/api/people/{id}/tasks/", getPersonTasks).Methods("GET")
+	server.HandleFunc("/api/people/{id}/tasks/", addNewTask).Methods("POST")
+	server.HandleFunc("/api/tasks/{id}", getTask).Methods("GET")
+	server.HandleFunc("/api/tasks/{id}", updateTask).Methods("PATCH")
+	server.HandleFunc("/api/tasks/{id}", removeTask).Methods("DELETE")
+	server.HandleFunc("/api/tasks/{id}/status", getTaskStatus).Methods("GET")
+	server.HandleFunc("/api/tasks/{id}/status", setTaskStatus).Methods("PUT")
+	server.HandleFunc("/api/tasks/{id}/owner", getOwnerId).Methods("GET")
+	server.HandleFunc("/api/tasks/{id}/owner", setOwner).Methods("PUT")
 	print("\nserver on...")
 
 

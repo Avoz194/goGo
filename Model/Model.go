@@ -3,7 +3,6 @@ package model
 import (
 	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
-	"time"
 )
 
 func AddPerson(name, email string) ent.Person {
@@ -38,8 +37,8 @@ func GetPersonTasks(id string) []ent.Task{
 	return db.GetPersonTasks(GetPerson(id))
 }
 
-func AddNewTask(personId, title , details string, status ent.Status, dueDate time.Time  ) ent.Task{
-	task := ent.CreateTask(title, personId, details, status, dueDate)
+func AddNewTask(personId, title , details string, status string, dueDate string  ) ent.Task{
+	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDate)
 	return db.AddTask(task)
 }
 
@@ -47,11 +46,11 @@ func AddNewTask(personId, title , details string, status ent.Status, dueDate tim
 func GetTaskDetails(taskId string) ent.Task {
 	return db.GetTask(taskId)
 }
-func SetTaskDetails(taskID , title , details string, status ent.Status, dueDate time.Time) ent.Task {
+func SetTaskDetails(taskID , title , details string, status string, dueDate string) ent.Task {
 	t := GetTaskDetails(taskID)
 	t.Title = title
 	t.Details = details
-	t.Status = status
+	t.Status = ent.CreateStatus(status)
 	t.DueDate = dueDate
 	return db.UpdateTask(t)
 }

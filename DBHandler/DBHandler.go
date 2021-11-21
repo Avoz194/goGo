@@ -147,7 +147,7 @@ func AddTask(t ent.Task) ent.Task{
 		return ent.Task{}
 	}
 	defer db.Close()
-	q := "INSERT INTO Persons VALUES ( ?, ? ,?, ?, ?, ? )"
+	q := "INSERT INTO Tasks VALUES ( ?, ? ,?, ?, ?, ? )"
 	insertResult, err := db.Query(q, t.Id, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate)
 	if err != nil {
 		panic(err.Error())
@@ -196,13 +196,12 @@ func UpdatePerson(p ent.Person) ent.Person{
 	}
 
 	defer updateResult.Close()
-
-	var person ent.Person
-	err = updateResult.Scan(&person.Id, &person.Name, &person.Email)
-	if err != nil {
-		panic(err)
-	}
-	return person
+	//var person ent.Person
+	//err = updateResult.Scan(&person.Id, &person.Name, &person.Email)
+	//if err != nil {
+	//	panic(err)
+	//}
+	return GetPerson(p.Id)
 }
 
 func GetPersonTasks(p ent.Person) []ent.Task {
