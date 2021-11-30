@@ -1,12 +1,14 @@
 package model
 
 import (
+	"fmt"
 	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
+	"time"
 )
 
-func AddPerson(name, email string) ent.Person {
-	person := ent.CreatePerson(name, email)
+func AddPerson(name, email, progLang string) ent.Person {
+	person := ent.CreatePerson(name, email, progLang)
 	return db.AddPerson(person)
 }
 
@@ -21,11 +23,12 @@ func GetPerson(id string) ent.Person{
 }
 
 //need to check how do we get the details (json?)
-func SetPersonDetails(id, name, email string) ent.Person{
+func SetPersonDetails(id, name, email, progLang string) ent.Person{
 	p := GetPerson(id)
 	// we should decide how we want to make no change (maybe null), and how to delete (maybe "").
 	p.Email = email
 	p.Name = name
+	p.ProgLang = progLang
 	return db.UpdatePerson(p)
 }
 //should return error if id not exist?
@@ -37,9 +40,18 @@ func GetPersonTasks(id string) []ent.Task{
 	return db.GetPersonTasks(GetPerson(id))
 }
 
-func AddNewTask(personId, title , details string, status string, dueDate string  ) ent.Task{
-	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDate)
+func AddNewTask(personId, title , details string, status string, dueDate string) ent.Task{
+	dueDateT := getTime(dueDate)
+	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
 	return db.AddTask(task)
+}
+
+func getTime(date string) time.Time{
+	dueDateT, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return dueDateT
 }
 
 //RaiseError if no TaskID
@@ -51,7 +63,7 @@ func SetTaskDetails(taskID , title , details string, status string, dueDate stri
 	t.Title = title
 	t.Details = details
 	t.Status = ent.CreateStatus(status)
-	t.DueDate = dueDate
+	t.DueDate = getTime(dueDate)
 	return db.UpdateTask(t)
 }
 

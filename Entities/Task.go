@@ -2,6 +2,7 @@ package entities
 
 import (
 	"github.com/google/uuid"
+	"time"
 )
 
 type Task struct {
@@ -10,14 +11,14 @@ type Task struct {
 	OwnerId string
 	Details string
 	Status  Status
-	DueDate string
+	DueDate time.Time
 }
 
 func (t *Task) IsDone() bool {
 	return t.Status.isDone()
 }
 
-func CreateTask(title string, ownerID string, details string, status Status, dueDate string) Task {
+func CreateTask(title string, ownerID string, details string, status Status, dueDate time.Time) Task {
 	id := uuid.New()
 	return Task{Id: id.String(), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
 }
