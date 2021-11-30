@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	ent "github.com/Avoz194/goGo/Entities"
 	mod "github.com/Avoz194/goGo/Model"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"time"
@@ -24,40 +24,101 @@ type TaskHolder struct {
 }
 
 
-func CreateServer() *mux.Router{
+func CreateServer(){
 	server := mux.NewRouter()
-	server.HandleFunc("/api/people/", addPerson).Methods("POST")
-	server.HandleFunc("/api/people/", getPeople).Methods("GET")
-	server.HandleFunc("/api/people/{id}", getPerson).Methods("GET")
-	server.HandleFunc("people/{id}", updatePerson).Methods("PATCH")
-	server.HandleFunc("people/{id}", deletePerson).Methods("DELETE")
-	server.HandleFunc("people/{id}/tasks/", getPersonTasks).Methods("GET")
-	server.HandleFunc("people/{id}/tasks/", addNewTask).Methods("POST")
-	server.HandleFunc("tasks/{id}", getTask).Methods("GET")
-	server.HandleFunc("tasks/{id}", updateTask).Methods("PATCH")
-	server.HandleFunc("tasks/{id}", removeTask).Methods("DELETE")
-	server.HandleFunc("tasks/{id}/status", getTaskStatus).Methods("GET")
-	server.HandleFunc("tasks/{id}/status", setTaskStatus).Methods("PUT")
-	server.HandleFunc("tasks/{id}/owner", getOwnerId).Methods("GET")
-	server.HandleFunc("tasks/{id}/owner", setOwner).Methods("PUT")
-	print("\nserver on...")
-
-
-	headersOk := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers",
-		"Accept", "X-Requested-With"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "DELETE", "POST", "PUT", "PATCH","OPTIONS"})
+	server.Methods("OPTIONS").HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request){
+			w.WriteHeader(http.StatusOK)
+		})
+	server.HandleFunc("/api/people/", functionHandler).Methods("POST", "GET")
+	server.HandleFunc("/api/people/{id}", functionHandler).Methods("GET","PATCH", "DELETE")
+	server.HandleFunc("/api/people/{id}/tasks/", functionHandler).Methods("GET", "POST")
+	server.HandleFunc("/api/tasks/{id}", functionHandler).Methods("GET", "PATCH", "DELETE")
+	server.HandleFunc("/api/tasks/{id}/status", functionHandler).Methods("GET", "PUT")
+	server.HandleFunc("/api/tasks/{id}/owner", getOwnerId).Methods("GET", "PUT")
 	http.Handle("/", server)
 
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(server)))
+	c :=  cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"POST","OPTIONS","GET","PATCH","DELETE","PUT", "FETCH"},
+		AllowedHeaders: []string{"*"},
+	})
 	print("\nserver on...")
-
-	return server
+	log.Fatal(http.ListenAndServe(":8080",c.Handler(server)))
+}
+func functionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	uri := r.RequestURI
+	method := r.Method
+	switch uri {
+		case "/api/people/":
+			{
+				if method == "POST" {
+					addPerson(w, r)
+				} else if method == "GET" {
+					getPeople(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case "/api/people/{id}":
+			{
+				if method == "PATCH" {
+					updatePerson(w, r)
+				} else if method == "DELETE" {
+					deletePerson(w, r)
+				} else if method == "GET" {
+					getPerson(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case "/people/{id}/tasks/":
+			{
+				if method == "GET" {
+					getPersonTasks(w, r)
+				} else if method == "POST" {
+					addNewTask(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case "/api/tasks/{id}":
+			{
+				if method == "GET" {
+					getTask(w, r)
+				} else if method == "PATCH" {
+					updateTask(w, r)
+				} else if method == "DELETE" {
+					removeTask(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case "/api/tasks/{id}/status":
+			{
+				if method == "GET" {
+					getTaskStatus(w, r)
+				} else if method == "PUT" {
+					setTaskStatus(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case "/api/tasks/{id}/owner":
+			{
+				if method == "GET" {
+					getOwnerId(w, r)
+				} else if method == "PUT" {
+					setOwner(w, r)
+				} else {
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+	}
 }
 
 func addPerson(w http.ResponseWriter, r *http.Request) {
-	println("in add")
-	w.Header().Set("Content-Type", "application/json")
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	p := mod.AddPerson(holder.Name, holder.Email)
@@ -66,7 +127,6 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	people := mod.GetAllPersons()
 	json.NewEncoder(w).Encode(people)
 }
