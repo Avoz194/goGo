@@ -2,6 +2,7 @@ package APIHandler
 
 import (
 	"encoding/json"
+	"fmt"
 	ent "github.com/Avoz194/goGo/Entities"
 	mod "github.com/Avoz194/goGo/Model"
 	"github.com/gorilla/mux"
@@ -50,6 +51,8 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uri := r.RequestURI
 	method := r.Method
+	params := mux.Vars(r)
+	s := fmt.Sprintf("/api/people/%s/tasks/", params["id"])
 	switch uri {
 		case "/api/people/":
 			{
@@ -61,7 +64,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case "/api/people/{id}":
+		case fmt.Sprintf("/api/people/%s", params["id"]):
 			{
 				if method == "PATCH" {
 					updatePerson(w, r)
@@ -73,7 +76,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case "/people/{id}/tasks/":
+		case s:
 			{
 				if method == "GET" {
 					getPersonTasks(w, r)
@@ -83,7 +86,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case "/api/tasks/{id}":
+	case fmt.Sprintf("/api/tasks/%s", params["id"]):
 			{
 				if method == "GET" {
 					getTask(w, r)
@@ -95,7 +98,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case "/api/tasks/{id}/status":
+	case fmt.Sprintf("/api/tasks/%s/status", params["id"]):
 			{
 				if method == "GET" {
 					getTaskStatus(w, r)
@@ -105,7 +108,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case "/api/tasks/{id}/owner":
+	case fmt.Sprintf("/api/tasks/%s/owner", params["id"]):
 			{
 				if method == "GET" {
 					getOwnerId(w, r)
@@ -115,7 +118,10 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
+	default:
+		w.WriteHeader(http.StatusNotFound)
 	}
+
 }
 
 func addPerson(w http.ResponseWriter, r *http.Request) {
@@ -166,6 +172,7 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 func addNewTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
+	print(params["id"])
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
