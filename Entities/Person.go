@@ -5,10 +5,14 @@ import (
 )
 
 type Person struct {
-	Id, Name, Email string
+	Name		string	`json:"name"`
+	Email 		string	`json:"email"`
+	ProgLang	string	`json:"favoriteProgrammingLanguage"`
+	ActiveTasks	int		`json:"activeTaskCount"`
+	Id			string	`json:"id"`
 }
 
-func CreatePerson(name, email string) Person {
+func CreatePerson(name, email, progLang string) Person {
 	id := uuid.New()
-	return Person{Id: id.String(), Name: name, Email: email}
+	return Person{Name: name, Email: email,ProgLang: progLang,ActiveTasks: 0, Id: id.String()}
 }

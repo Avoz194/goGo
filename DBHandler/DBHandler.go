@@ -2,8 +2,10 @@ package DBHandler
 
 import (
 	"database/sql"
+	"fmt"
 	ent "github.com/Avoz194/goGo/Entities"
 	"github.com/go-sql-driver/mysql"
+	"time"
 )
 
 const IP = "127.0.0.1:3306"
@@ -35,12 +37,11 @@ func CreateDatabase(){
 		Addr:   "127.0.0.1:3306",
 	}
 	db, err:= sql.Open("mysql", cfg.FormatDSN())
-
+	//db.Exec("DROP DATABASE " + DATABASE_NAME)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-
 	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME)
 	if err != nil {
 		panic(err)
@@ -116,11 +117,13 @@ func GetTask(id string) ent.Task {
 	defer db.Close()
 
 	var t ent.Task
+	var date string
 
-	err := db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&t.Id, &t.Title, &t.OwnerId, &t.Details, &t.Status, &t.DueDate)
+	err := db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&t.Id, &t.Title, &t.OwnerId, &t.Details, &t.Status, &date)
 	if err != nil {
 		panic(err)
 	}
+	t.DueDate = getTime(date)
 	return t
 }
 
@@ -147,8 +150,8 @@ func AddTask(t ent.Task) ent.Task{
 		return ent.Task{}
 	}
 	defer db.Close()
-	q := "INSERT INTO Persons VALUES ( ?, ? ,?, ?, ?, ? )"
-	insertResult, err := db.Query(q, t.Id, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate)
+	q := "INSERT INTO Tasks VALUES ( ?, ? ,?, ?, ?, ? )"
+	insertResult, err := db.Query(q, t.Id, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -165,7 +168,7 @@ func UpdateTask(t ent.Task) ent.Task{
 	defer db.Close()
 
 	q := "UPDATE Tasks SET title = ? ,ownerID = ?, details = ?, statusID = ?, dueDate = ?  where id = ?"
-	updateResult, err := db.Query(q, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate, t.Id)
+	updateResult, err := db.Query(q, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"), t.Id)
 
 	if err != nil {
 		panic(err)
@@ -174,10 +177,12 @@ func UpdateTask(t ent.Task) ent.Task{
 	defer updateResult.Close()
 
 	var task ent.Task
- 	err = updateResult.Scan(&task.Id, &task.Title, &task.OwnerId, &task.Status, &task.DueDate)
+	var date string
+ 	err = updateResult.Scan(&task.Id, &task.Title, &task.OwnerId, &t.Details, &task.Status, &date)
 	if err != nil {
 		panic(err)
 	}
+	t.DueDate = getTime(date)
 	return task
 }
 
@@ -196,13 +201,12 @@ func UpdatePerson(p ent.Person) ent.Person{
 	}
 
 	defer updateResult.Close()
-
-	var person ent.Person
-	err = updateResult.Scan(&person.Id, &person.Name, &person.Email)
-	if err != nil {
-		panic(err)
-	}
-	return person
+	//var person ent.Person
+	//err = updateResult.Scan(&person.Id, &person.Name, &person.Email)
+	//if err != nil {
+	//	panic(err)
+	//}
+	return GetPerson(p.Id)
 }
 
 func GetPersonTasks(p ent.Person) []ent.Task {
@@ -222,11 +226,13 @@ func GetPersonTasks(p ent.Person) []ent.Task {
 	tasksList := []ent.Task{}
 	for results.Next() {
 		var task ent.Task
+		var date string
 		// for each row, scan the result into our tag composite object
-		err = results.Scan(&task.Id, &task.Title, &task.OwnerId, &task.Status, &task.DueDate)
+		err = results.Scan(&task.Id, &task.Title, &task.OwnerId, &task.Details, &task.Status, &date)
 		if err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		}
+		task.DueDate = getTime(date)
 		tasksList = append(tasksList, task)
 	}
 	return tasksList
@@ -256,4 +262,12 @@ func GetAllPersons() []ent.Person {
 		personList = append(personList, person)
 	}
 	return personList
+}
+
+func getTime(date string) time.Time{
+	dueDateT, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return dueDateT
 }
