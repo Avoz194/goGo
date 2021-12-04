@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	db.CreateDatabase()
 	print("created DB.")
 	api.CreateServer()
