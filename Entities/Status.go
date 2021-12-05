@@ -2,20 +2,18 @@ package entities
 
 type Status int
 
+
 const (
-	active Status = iota
-	done
+	done Status = iota
+	active
 	unknown = -1
 )
 
+var AllStatuses = []string{"done", "active"}
+var AllStatusIDs = []Status{done, active}
+
 func (s Status) String() string {
-	switch s {
-	case active:
-		return "active"
-	case done:
-		return "done"
-	}
-	return "unknown"
+	return AllStatuses[s]
 }
 
 //Change default for Status
@@ -29,3 +27,4 @@ func CreateStatus(sString string) Status{
 func (s Status) isDone() bool {
 	return s == done
 }
+

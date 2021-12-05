@@ -6,7 +6,7 @@ import (
 )
 
 type Task struct {
-	Id      string
+	id      string
 	Title   string
 	OwnerId string
 	Details string
@@ -14,11 +14,19 @@ type Task struct {
 	DueDate time.Time
 }
 
+func CreateTask(title string, ownerID string, details string, status Status, dueDate time.Time) Task {
+	id := uuid.New()
+	return Task{id: id.String(), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
+}
+
 func (t *Task) IsDone() bool {
 	return t.Status.isDone()
 }
 
-func CreateTask(title string, ownerID string, details string, status Status, dueDate time.Time) Task {
-	id := uuid.New()
-	return Task{Id: id.String(), Title: title, OwnerId: ownerID,Details: details,Status: status,DueDate: dueDate}
+func (t *Task) GetTaskId() string {
+	return t.id
+}
+
+func (t *Task) SetTaskId(taskID string) {
+	t.id = taskID
 }
