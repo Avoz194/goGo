@@ -16,6 +16,8 @@ type PersonHolder struct {
 	Name 		string	`json:"name"`
 	Email		string	`json:"emails"`
 	ProgLang	string	`json:"favoriteProgrammingLanguage"`
+	ActiveTasks	int		`json:"activeTaskCount"`
+	Id		string	`json:"id"`
 }
 
 type TaskHolder struct {
@@ -55,7 +57,6 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 	uri := r.RequestURI
 	method := r.Method
 	params := mux.Vars(r)
-	s := fmt.Sprintf("/api/people/%s/tasks/", params["id"])
 	switch uri {
 		case "/api/people/":
 			{
@@ -79,7 +80,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
-		case s:
+		case fmt.Sprintf("/api/people/%s/tasks/", params["id"]):
 			{
 				if method == "GET" {
 					getPersonTasks(w, r)
@@ -132,19 +133,19 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&holder)
 	p := mod.AddPerson(holder.Name, holder.Email, holder.ProgLang)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
 	people := mod.GetAllPersons()
-	json.NewEncoder(w).Encode(people)
+	json.NewEncoder(w).Encode(personsToHolders(people))
 }
 
 //need to add case of not exist
 func getPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	p := mod.GetPerson(params["id"])
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(personToHolder(p))
 
 }
 
@@ -153,7 +154,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
-	json.NewEncoder(w).Encode(p)
+	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func deletePerson(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +171,6 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 
 func addNewTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	print(params["id"])
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
@@ -225,7 +225,7 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 
 func taskToHolder(task entities.Task) TaskHolder{
 	var holder TaskHolder
-	holder.Id = task.Id
+	holder.Id = task.GetTaskId()
 	holder.Title = task.Title
 	holder.OwnerId = task.OwnerId
 	holder.Details = task.Details
@@ -238,6 +238,24 @@ func tasksToHolders(tasks []entities.Task) []TaskHolder{
 	var holders []TaskHolder
 	for _,task := range tasks {
 		holders = append(holders, taskToHolder(task))
+	}
+	return holders
+}
+
+func personToHolder(person entities.Person) PersonHolder{
+	var holder PersonHolder
+	holder.Id = person.GetPersonId()
+	holder.Name = person.Name
+	holder.Email = person.Email
+	holder.ActiveTasks = person.GetActiveTasks()
+	holder.ProgLang = person.ProgLang
+	return holder
+}
+
+func personsToHolders(persons []entities.Person) []PersonHolder{
+	var holders []PersonHolder
+	for _,person := range persons {
+		holders = append(holders, personToHolder(person))
 	}
 	return holders
 }
