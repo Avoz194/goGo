@@ -187,8 +187,13 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 
 func deletePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	mod.RemovePerson(params["id"])
+	err := mod.RemovePerson(params["id"])
 	// return err in case of failure
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 }
 
 func getPersonTasks(w http.ResponseWriter, r *http.Request) {
