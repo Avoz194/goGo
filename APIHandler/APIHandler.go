@@ -65,6 +65,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPeople(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -77,6 +78,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPerson(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -87,6 +89,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "POST" {
 					addNewTask(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -99,6 +102,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "DELETE" {
 					removeTask(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -109,6 +113,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setTaskStatus(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -119,13 +124,16 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setOwner(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
 	default:
-		w.WriteHeader(http.StatusNotFound)
+		{
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusNotFound)
+		}
 	}
-
 }
 
 func addPerson(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +141,7 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&holder)
 	err,p := mod.AddPerson(holder.Name, holder.Email, holder.ProgLang)
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err)
 	}
@@ -143,6 +152,7 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 func getPeople(w http.ResponseWriter, r *http.Request) {
 	err,people := mod.GetAllPersons()
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err)
 	}
@@ -154,6 +164,7 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err,p := mod.GetPerson(params["id"])
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err)
 	}
@@ -167,6 +178,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&holder)
 	err,p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err)
 	}
@@ -183,6 +195,7 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err,tasks := mod.GetPersonTasks(params["id"])
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(err)
 	}
