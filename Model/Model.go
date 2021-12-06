@@ -7,37 +7,57 @@ import (
 	"time"
 )
 
-func AddPerson(name, email, progLang string) ent.Person {
-	person := ent.CreatePerson(name, email, progLang)
-	return db.AddPerson(person)
+func AddPerson(name, email, progLang string) (error, ent.Person) {
+	p := ent.CreatePerson(name, email, progLang)
+	err := db.AddPerson(p)
+	if err != nil{
+		return err,ent.Person{}
+	}
+	return GetPerson(p.GetPersonId())
 }
 
 // returning list of person, should return a list of person in json probably
 // need to protect from corruption (only admins)
-func GetAllPersons() []ent.Person{
+func GetAllPersons() (error,[]ent.Person){
 	return db.GetAllPersons()
 }
 
-func GetPerson(id string) ent.Person{
+func GetPerson(id string) (error,ent.Person){
 	return db.GetPerson(id)
 }
 
 //need to check how do we get the details (json?)
-func SetPersonDetails(id, name, email, progLang string) ent.Person{
-	p := GetPerson(id)
+func SetPersonDetails(id, name, email, progLang string) (error ,ent.Person){
+	err,p := GetPerson(id)
+	if err != nil{
+		return err,ent.Person{}
+	}
 	// we should decide how we want to make no change (maybe null), and how to delete (maybe "").
 	p.Email = email
 	p.Name = name
 	p.ProgLang = progLang
-	return db.UpdatePerson(p)
+
+	err = db.UpdatePerson(p)
+	if err != nil{
+		return err, ent.Person{}
+	}
+	return GetPerson(p.GetPersonId())
 }
 //should return error if id not exist?
-func RemovePerson(id string){
-	db.DeletePerson(GetPerson(id))
+func RemovePerson(id string) error{
+	err, p := GetPerson(id)
+	if err != nil{
+		return err
+	}
+	return db.DeletePerson(p)
 }
 
-func GetPersonTasks(id string) []ent.Task{
-	return db.GetPersonTasks(GetPerson(id))
+func GetPersonTasks(id string) (error, []ent.Task){
+	err, p := GetPerson(id)
+	if err != nil{
+		return err, []ent.Task{}
+	}
+	return db.GetPersonTasks(p)
 }
 
 func AddNewTask(personId, title , details string, status string, dueDate string) ent.Task{
