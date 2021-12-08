@@ -24,6 +24,11 @@ func InvalidInput(ent interface{}, extraDetails string, err error) error{
     return fmt.Errorf("Value %s is not a legal %s. Error: %w", extraDetails, entType, err)
 }
 
+func FailedCommitingRequest(extraDetails string, err error) error{
+    log.Println(err)
+    return fmt.Errorf("Failed commiting %s request. Error: %w", extraDetails, err)
+}
+
 func TechnicalFailrue(extraDetails string, err error) error{
     log.Fatal(err)
     return fmt.Errorf("Technical Failure occured.%s Error: %w", extraDetails, err)

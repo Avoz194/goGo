@@ -65,6 +65,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPeople(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -77,6 +78,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPerson(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -87,6 +89,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "POST" {
 					addNewTask(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -99,6 +102,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "DELETE" {
 					removeTask(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -109,6 +113,7 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setTaskStatus(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -119,32 +124,50 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setOwner(w, r)
 				} else {
+					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
 	default:
-		w.WriteHeader(http.StatusNotFound)
+		{
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusNotFound)
+		}
 	}
-
 }
 
 func addPerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	p := mod.AddPerson(holder.Name, holder.Email, holder.ProgLang)
+	err,p := mod.AddPerson(holder.Name, holder.Email, holder.ProgLang)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
-	people := mod.GetAllPersons()
+	err,people := mod.GetAllPersons()
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 	json.NewEncoder(w).Encode(personsToHolders(people))
 }
 
 //need to add case of not exist
 func getPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	p := mod.GetPerson(params["id"])
+	err,p := mod.GetPerson(params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 	json.NewEncoder(w).Encode(personToHolder(p))
 
 }
@@ -153,19 +176,34 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
+	err,p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func deletePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	mod.RemovePerson(params["id"])
+	err := mod.RemovePerson(params["id"])
 	// return err in case of failure
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 }
 
 func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	tasks := mod.GetPersonTasks(params["id"])
+	err,tasks := mod.GetPersonTasks(params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
 	json.NewEncoder(w).Encode(tasksToHolders(tasks))
 }
 
