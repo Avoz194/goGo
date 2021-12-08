@@ -49,7 +49,7 @@ func CreateServer(){
 		AllowedMethods: []string{"POST","OPTIONS","GET","PATCH","DELETE","PUT", "FETCH"},
 		AllowedHeaders: []string{"*"},
 	})
-	print("\nserver on...")
+	println("\nserver on...")
 	log.Fatal(http.ListenAndServe(":8080",c.Handler(server)))
 }
 func functionHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +143,7 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(personToHolder(p))
@@ -155,7 +155,7 @@ func getPeople(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	} else {
 		json.NewEncoder(w).Encode(personsToHolders(people))
 	}
@@ -168,7 +168,7 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}else {
 		json.NewEncoder(w).Encode(personToHolder(p))
 	}
@@ -182,7 +182,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	} else {
 		json.NewEncoder(w).Encode(personToHolder(p))
 	}
@@ -195,7 +195,7 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}
 }
 
@@ -205,7 +205,7 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	} else {
 		json.NewEncoder(w).Encode(tasksToHolders(tasks))
 	}
@@ -220,7 +220,7 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(taskToHolder(t))
@@ -233,7 +233,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}else {
 		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
@@ -247,7 +247,7 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}else {
 		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
@@ -259,7 +259,7 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}
 }
 
@@ -269,7 +269,7 @@ func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}else {
 		json.NewEncoder(w).Encode(s.String())
 	}
@@ -283,7 +283,7 @@ func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}
 }
 
@@ -294,7 +294,7 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}else {
 		json.NewEncoder(w).Encode(id)
 	}
@@ -308,7 +308,7 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
 	}
 }
 

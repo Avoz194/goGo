@@ -212,17 +212,6 @@ func UpdateTask(t ent.Task) error{
 
 	defer updateResult.Close()
 	return nil
-
-	//var task ent.Task
-	//var id string
-	//var date string
- 	//err = updateResult.Scan(&id, &task.Title, &task.OwnerId, &t.Details, &task.Status, &date)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//task.DueDate = getTime(date)
-	//task.SetTaskId(id)
-	//return task
 }
 
 func UpdatePerson(p ent.Person) error{
@@ -297,9 +286,9 @@ func GetAllPersons() (error,[]ent.Person) {
 		activeTasks := 0
 		var personID string
 		// for each row, scan the result into our tag composite object
+		err = results.Scan(&personID, &person.Name, &person.Email, &person.ProgLang, &activeTasks)
 		person.SetActiveTasks(activeTasks)
 		person.SetPersonId(personID)
-		err = results.Scan(&personID, &person.Name, &person.Email, &person.ProgLang, &activeTasks)
 		if err != nil {
 			msg := "Get All Persons"
 			return erro.FailedCommitingRequest(msg,err), []ent.Person{}
