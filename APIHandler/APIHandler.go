@@ -17,7 +17,7 @@ type PersonHolder struct {
 	Email		string	`json:"emails"`
 	ProgLang	string	`json:"favoriteProgrammingLanguage"`
 	ActiveTasks	int		`json:"activeTaskCount"`
-	Id		string	`json:"id"`
+	Id			string	`json:"id"`
 }
 
 type TaskHolder struct {
@@ -49,7 +49,7 @@ func CreateServer(){
 		AllowedMethods: []string{"POST","OPTIONS","GET","PATCH","DELETE","PUT", "FETCH"},
 		AllowedHeaders: []string{"*"},
 	})
-	print("\nserver on...")
+	println("\nserver on...")
 	log.Fatal(http.ListenAndServe(":8080",c.Handler(server)))
 }
 func functionHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,20 +143,23 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(personToHolder(p))
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
-	err,people := mod.GetAllPersons()
+	err, people := mod.GetAllPersons()
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(personsToHolders(people))
 	}
-	json.NewEncoder(w).Encode(personsToHolders(people))
 }
 
 //need to add case of not exist
@@ -166,23 +169,26 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	}else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(personToHolder(p))
 	}
-	json.NewEncoder(w).Encode(personToHolder(p))
-
 }
 
 func updatePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	err,p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
+	err, p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(personToHolder(p))
 	}
-	json.NewEncoder(w).Encode(personToHolder(p))
 }
 
 func deletePerson(w http.ResponseWriter, r *http.Request) {
@@ -192,73 +198,134 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	}else{
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
 func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	err,tasks := mod.GetPersonTasks(params["id"])
+	err, tasks := mod.GetPersonTasks(params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		w.Write([]byte (err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(tasksToHolders(tasks))
 	}
-	json.NewEncoder(w).Encode(tasksToHolders(tasks))
 }
 
 func addNewTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
+	err, t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
 
-	json.NewEncoder(w).Encode(taskToHolder(t))
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(taskToHolder(t))
+	}
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	t := mod.GetTaskDetails(params["id"])
-	json.NewEncoder(w).Encode(taskToHolder(t))
+	err, t := mod.GetTaskDetails(params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	}else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(taskToHolder(t))
+	}
 }
 
 func updateTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
-	json.NewEncoder(w).Encode(taskToHolder(t))
+	err, t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	}else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(taskToHolder(t))
+	}
 }
 
 func removeTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	mod.RemoveTask(params["id"])
+	err := mod.RemoveTask(params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	} else{
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	s := mod.GetStatusForTask(params["id"])
-	json.NewEncoder(w).Encode(s.String())
+	err, s := mod.GetStatusForTask(params["id"])
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	}else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(s.String())
+	}
 }
 
 func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder string
 	json.NewDecoder(r.Body).Decode(&holder)
-	mod.SetTaskStatus(params["id"], holder)
+	err := mod.SetTaskStatus(params["id"], holder)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	} else{
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id := mod.GetOwnerForTask(params["id"])
-	json.NewEncoder(w).Encode(id)
+	err, id := mod.GetOwnerForTask(params["id"])
+
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	}else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(id)
+	}
 }
 
 func setOwner(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var ownerID string
 	json.NewDecoder(r.Body).Decode(&ownerID)
-	mod.SetTaskOwner(params["id"], ownerID)
+	err := mod.SetTaskOwner(params["id"], ownerID)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte (err.Error()))
+	}else{
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 func taskToHolder(task entities.Task) TaskHolder{

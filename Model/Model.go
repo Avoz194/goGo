@@ -43,7 +43,6 @@ func SetPersonDetails(id, name, email, progLang string) (error ,ent.Person){
 	}
 	return GetPerson(p.GetPersonId())
 }
-//should return error if id not exist?
 func RemovePerson(id string) error{
 	err, p := GetPerson(id)
 	if err != nil{
@@ -60,10 +59,14 @@ func GetPersonTasks(id string) (error, []ent.Task){
 	return db.GetPersonTasks(p)
 }
 
-func AddNewTask(personId, title , details string, status string, dueDate string) ent.Task{
+func AddNewTask(personId, title , details string, status string, dueDate string) (error,ent.Task){
 	dueDateT := getTime(dueDate)
 	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
-	return db.AddTask(task)
+	err := db.AddTask(task)
+	if err != nil {
+		return err, ent.Task{}
+	}
+	return GetTaskDetails(task.GetTaskId())
 }
 
 func getTime(date string) time.Time{
@@ -75,42 +78,66 @@ func getTime(date string) time.Time{
 }
 
 //RaiseError if no TaskID
-func GetTaskDetails(taskId string) ent.Task {
+func GetTaskDetails(taskId string) (error, ent.Task) {
 	return db.GetTask(taskId)
 }
-func SetTaskDetails(taskID , title , details string, status string, dueDate string) ent.Task {
-	t := GetTaskDetails(taskID)
+func SetTaskDetails(taskID , title , details string, status string, dueDate string) (error, ent.Task) {
+	err, t := GetTaskDetails(taskID)
+	if err != nil{
+		return err, ent.Task{}
+	}
 	t.Title = title
 	t.Details = details
 	t.Status = ent.CreateStatus(status)
 	t.DueDate = getTime(dueDate)
-	return db.UpdateTask(t)
+
+	err = db.UpdateTask(t)
+	if err != nil{
+		return err, ent.Task{}
+	}
+	return GetTaskDetails(taskID)
 }
 
-func RemoveTask(id string) {
-	db.DeleteTask(GetTaskDetails(id))
+func RemoveTask(id string) error {
+	err, t := GetTaskDetails(id)
+	if err != nil{
+		return err
+	}
+	return db.DeleteTask(t)
 }
 
-func GetStatusForTask(taskId string) ent.Status{
-	var task = GetTaskDetails(taskId)
-	return task.Status
+func GetStatusForTask(taskId string) (error, ent.Status){
+	err, task := GetTaskDetails(taskId)
+	if err != nil{
+		return err, -1
+	}
+	return nil,task.Status
 }
 
-func GetOwnerForTask(taskId string) string{
-	var task = GetTaskDetails(taskId)
-	return task.OwnerId
+func GetOwnerForTask(taskId string) (error, string){
+	err, task := GetTaskDetails(taskId)
+	if err != nil{
+		return err, ""
+	}
+	return nil, task.OwnerId
 }
 
 //Validate Owner ID
-func SetTaskOwner(taskId string, ownerID string){
-	var task = GetTaskDetails(taskId)
+func SetTaskOwner(taskId string, ownerID string) error{
+	err, task := GetTaskDetails(taskId)
+	if err != nil{
+		return err
+	}
 	task.OwnerId = ownerID
-	db.UpdateTask(task)
+	return db.UpdateTask(task)
 }
 
-func SetTaskStatus(taskId string, status string){
-	var task = GetTaskDetails(taskId)
+func SetTaskStatus(taskId string, status string) error{
+	err, task := GetTaskDetails(taskId)
+	if err != nil{
+		return err
+	}
 	var stat = ent.CreateStatus(status)
 	task.Status = stat
-	db.UpdateTask(task)
+	return db.UpdateTask(task)
 }

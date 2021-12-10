@@ -7,9 +7,9 @@ import (
 
 func main() {
 	db.CreateDatabase()
-	print("created DB.")
+	println("created DB.")
 	api.CreateServer()
-	print("server on.")
+	println("server on.")
 
 
 }

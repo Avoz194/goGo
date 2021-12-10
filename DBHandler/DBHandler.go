@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	ent "github.com/Avoz194/goGo/Entities"
-	mod "github.com/Avoz194/goGo/model"
+	erro "github.com/Avoz194/goGo/Error"
 	"github.com/go-sql-driver/mysql"
 	"log"
 	"time"
@@ -27,7 +27,7 @@ func openConnection() (error,*sql.DB) {
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatal("Failed To connect to MySQL")
-		return mod.TechnicalFailrue("Failed To connect to MySQL.",err), nil
+		return erro.TechnicalFailrue("Failed To connect to MySQL.",err), nil
 	}
 	return nil,db
 }
@@ -99,23 +99,25 @@ func DeletePerson(person ent.Person) error{
 	_, err = db.Exec(query, person.GetPersonId())
 	if err != nil {
 		msg := fmt.Sprintf("Delete Person with id %s", person.GetPersonId())
-		return mod.FailedCommitingRequest(msg,err)
+		return erro.FailedCommitingRequest(msg,err)
 	}
 	return nil
 }
 
-func DeleteTask(task ent.Task) {
-	db := openConnection()
-	if db==nil {
-		return
+func DeleteTask(task ent.Task) error {
+	err, db := openConnection()
+	if err != nil {
+		return err
 	}
 	defer db.Close()
 
 	query := "DELETE FROM Tasks WHERE id =?"
-	_, err := db.Exec(query,task.GetTaskId())
+	_, err = db.Exec(query,task.GetTaskId())
 	if err != nil {
-		panic(err)
+		msg := fmt.Sprintf("Delete Task with id %s", task.GetTaskId())
+		return erro.FailedCommitingRequest(msg,err)
 	}
+	return nil
 }
 
 func GetPerson(id string) (error,ent.Person) {
@@ -134,28 +136,29 @@ func GetPerson(id string) (error,ent.Person) {
 
 	if err != nil {
 		extraDetails :=	fmt.Sprintf("id %s", id)
-		return mod.NoSuchEntityError(p, extraDetails,err), ent.Person{}
+		return erro.NoSuchEntityError(p, extraDetails,err), ent.Person{}
 	}
 	return nil,p
 }
 
-func GetTask(id string) ent.Task {
-	db := openConnection()
-	if db==nil {
-		return ent.Task{}
+func GetTask(id string) (error,ent.Task) {
+	err, db := openConnection()
+	if err!= nil {
+		return err,ent.Task{}
 	}
 	defer db.Close()
 
 	var t ent.Task
 	var date string
 	var taskID string
-	err := db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&taskID, &t.Title, &t.OwnerId, &t.Details, &t.Status, &date)
+	err = db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&taskID, &t.Title, &t.OwnerId, &t.Details, &t.Status, &date)
 	if err != nil {
-		panic(err)
+		extraDetails :=	fmt.Sprintf("id %s", id)
+		return erro.NoSuchEntityError(t, extraDetails,err), ent.Task{}
 	}
 	t.DueDate = getTime(date)
 	t.SetTaskId(taskID)
-	return t
+	return err,t
 }
 
 func AddPerson(p ent.Person) (error){
@@ -168,33 +171,34 @@ func AddPerson(p ent.Person) (error){
 	insertResult, err := db.Query(q, p.GetPersonId(), p.Name, p.Email, p.ProgLang)
  	if err != nil {
 		extraDetails :=	fmt.Sprintf("email %s",p.Email)
-		return mod.EntityAlreadyExists(p,extraDetails,err)
+		return erro.EntityAlreadyExists(p,extraDetails,err)
 	}
 	defer insertResult.Close()
 
 	return nil
 }
 
-func AddTask(t ent.Task) ent.Task{
-	db := openConnection()
-	if db==nil {
-		return ent.Task{}
+func AddTask(t ent.Task) error{
+	err, db := openConnection()
+	if err!=nil {
+		return err
 	}
 	defer db.Close()
 	q := "INSERT INTO Tasks VALUES ( ?, ? ,?, ?, ?, ? )"
 	insertResult, err := db.Query(q, t.GetTaskId(), t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"))
 	if err != nil {
-		panic(err.Error())
+		extraDetails :=	fmt.Sprintf("id %s", t.OwnerId)
+		return erro.NoSuchEntityError(ent.Person{},extraDetails,err)
 	}
 	defer insertResult.Close()
 
-	return GetTask(t.GetTaskId())
+	return nil
 }
 
-func UpdateTask(t ent.Task) ent.Task{
-	db := openConnection()
-	if db==nil {
-		return ent.Task{}
+func UpdateTask(t ent.Task) error{
+	err, db := openConnection()
+	if err!=nil {
+		return err
 	}
 	defer db.Close()
 
@@ -202,24 +206,15 @@ func UpdateTask(t ent.Task) ent.Task{
 	updateResult, err := db.Query(q, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"), t.GetTaskId())
 
 	if err != nil {
-		panic(err)
+		extraDetails :=	fmt.Sprintf("Update Task with id %s", t.GetTaskId())
+		return erro.FailedCommitingRequest(extraDetails,err)
 	}
 
 	defer updateResult.Close()
-
-	var task ent.Task
-	var id string
-	var date string
- 	err = updateResult.Scan(&id, &task.Title, &task.OwnerId, &t.Details, &task.Status, &date)
-	if err != nil {
-		panic(err)
-	}
-	task.DueDate = getTime(date)
-	task.SetTaskId(id)
-	return task
+	return nil
 }
 
-func UpdatePerson(p ent.Person) (error){
+func UpdatePerson(p ent.Person) error{
 	err,db := openConnection()
 	if err != nil {
 		return err
@@ -231,7 +226,7 @@ func UpdatePerson(p ent.Person) (error){
 
 	if err != nil {
 		extraDetails :=	fmt.Sprintf("email %s",p.Email)
-		return mod.EntityAlreadyExists(p,extraDetails,err)
+		return erro.EntityAlreadyExists(p,extraDetails,err)
 	}
 
 	defer updateResult.Close()
@@ -250,7 +245,7 @@ func GetPersonTasks(p ent.Person) (error,[]ent.Task) {
 	results, err := db.Query("SELECT * FROM Tasks where ownerid = ?",p.GetPersonId())
 	if err != nil {
 		msg := fmt.Sprintf("Get Tasks for Person with id %s", p.GetPersonId())
-		return mod.FailedCommitingRequest(msg,err), []ent.Task{}
+		return erro.FailedCommitingRequest(msg,err), []ent.Task{}
 	}
 
 	tasksList := []ent.Task{}
@@ -262,7 +257,7 @@ func GetPersonTasks(p ent.Person) (error,[]ent.Task) {
 		err = results.Scan(&id, &task.Title, &task.OwnerId, &task.Details, &task.Status, &date)
 		if err != nil {
 			msg := fmt.Sprintf("Get Tasks for Person with id %s", p.GetPersonId())
-			return mod.FailedCommitingRequest(msg,err), []ent.Task{}
+			return erro.FailedCommitingRequest(msg,err), []ent.Task{}
 		}
 		task.DueDate = getTime(date)
 		task.SetTaskId(id)
@@ -282,7 +277,7 @@ func GetAllPersons() (error,[]ent.Person) {
 	results, err := db.Query("SELECT DISTINCT Persons.*, count(Tasks.id) over (partition by Persons.id) as numOfActiveTasks FROM Persons left join Tasks on Persons.id = Tasks.ownerId AND Tasks.statusID = 1")
 	if err != nil {
 		msg := "Get All Persons"
-		return mod.FailedCommitingRequest(msg,err), []ent.Person{}
+		return erro.FailedCommitingRequest(msg,err), []ent.Person{}
 	}
 
 	personList := []ent.Person{}
@@ -291,12 +286,12 @@ func GetAllPersons() (error,[]ent.Person) {
 		activeTasks := 0
 		var personID string
 		// for each row, scan the result into our tag composite object
+		err = results.Scan(&personID, &person.Name, &person.Email, &person.ProgLang, &activeTasks)
 		person.SetActiveTasks(activeTasks)
 		person.SetPersonId(personID)
-		err = results.Scan(&personID, &person.Name, &person.Email, &person.ProgLang, &activeTasks)
 		if err != nil {
 			msg := "Get All Persons"
-			return mod.FailedCommitingRequest(msg,err), []ent.Person{}
+			return erro.FailedCommitingRequest(msg,err), []ent.Person{}
 		}
 		personList = append(personList, person)
 	}
