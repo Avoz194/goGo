@@ -1,9 +1,11 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
+	goErr "github.com/Avoz194/goGo/Error"
 	"time"
 )
 
@@ -17,7 +19,6 @@ func AddPerson(name, email, progLang string) (error, ent.Person) {
 }
 
 // returning list of person, should return a list of person in json probably
-// need to protect from corruption (only admins)
 func GetAllPersons() (error,[]ent.Person){
 	return db.GetAllPersons()
 }
@@ -26,17 +27,21 @@ func GetPerson(id string) (error,ent.Person){
 	return db.GetPerson(id)
 }
 
-//need to check how do we get the details (json?)
 func SetPersonDetails(id, name, email, progLang string) (error ,ent.Person){
 	err,p := GetPerson(id)
 	if err != nil{
 		return err,ent.Person{}
 	}
-	// we should decide how we want to make no change (maybe null), and how to delete (maybe "").
-	p.Email = email
-	p.Name = name
-	p.ProgLang = progLang
-
+	//update if not empty
+	if email!= ""{
+		p.Email = email
+	}
+	if name!= ""{
+		p.Name = name
+	}
+	if progLang!= ""{
+		p.ProgLang = progLang
+	}
 	err = db.UpdatePerson(p)
 	if err != nil{
 		return err, ent.Person{}
@@ -51,17 +56,31 @@ func RemovePerson(id string) error{
 	return db.DeletePerson(p)
 }
 
-func GetPersonTasks(id string) (error, []ent.Task){
+func GetPersonTasks(id string, status string) (error, []ent.Task){
 	err, p := GetPerson(id)
 	if err != nil{
 		return err, []ent.Task{}
 	}
-	return db.GetPersonTasks(p)
+	stat := ent.UnkownStatus
+	if status != ""{
+		stat = ent.CreateStatus(status)
+		if stat == ent.UnkownStatus {
+			extraDetails :=	fmt.Sprintf("status %s",status)
+			err = goErr.InvalidInput(stat,extraDetails,errors.New(""))
+			return err, []ent.Task{}
+		}
+	}
+	return db.GetPersonTasks(p,stat)
 }
 
 func AddNewTask(personId, title , details string, status string, dueDate string) (error,ent.Task){
 	dueDateT := getTime(dueDate)
 	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
+	if task.Status == ent.UnkownStatus {
+		extraDetails :=	fmt.Sprintf("status %s",status)
+		err := goErr.InvalidInput(task.Status,extraDetails,errors.New(""))
+		return err, ent.Task{}
+	}
 	err := db.AddTask(task)
 	if err != nil {
 		return err, ent.Task{}
@@ -81,15 +100,37 @@ func getTime(date string) time.Time{
 func GetTaskDetails(taskId string) (error, ent.Task) {
 	return db.GetTask(taskId)
 }
-func SetTaskDetails(taskID , title , details string, status string, dueDate string) (error, ent.Task) {
+func SetTaskDetails(taskID , title , details string, status string, dueDate string, ownerid string) (error, ent.Task) {
 	err, t := GetTaskDetails(taskID)
 	if err != nil{
 		return err, ent.Task{}
 	}
-	t.Title = title
-	t.Details = details
-	t.Status = ent.CreateStatus(status)
-	t.DueDate = getTime(dueDate)
+
+	if title!= "" {
+		t.Title = title
+	}
+	if details!= "" {
+		t.Details = details
+	}
+	if dueDate!= "" {
+		t.DueDate = getTime(dueDate)
+	}
+	if status!=""{
+		var stat = ent.CreateStatus(status)
+		if stat == ent.UnkownStatus {
+			extraDetails := fmt.Sprintf("status %s", status)
+			err = goErr.InvalidInput(stat, extraDetails, errors.New(""))
+			return err, ent.Task{}
+		}
+		t.Status = stat
+	}
+	if ownerid!=""{
+		err, _ := GetPerson(ownerid)
+		if err != nil{
+			return err, ent.Task{}
+		}
+		t.OwnerId = ownerid
+	}
 
 	err = db.UpdateTask(t)
 	if err != nil{
@@ -124,6 +165,10 @@ func GetOwnerForTask(taskId string) (error, string){
 
 //Validate Owner ID
 func SetTaskOwner(taskId string, ownerID string) error{
+	err, _ := GetPerson(ownerID)
+	if err != nil{
+		return err
+	}
 	err, task := GetTaskDetails(taskId)
 	if err != nil{
 		return err
@@ -138,6 +183,11 @@ func SetTaskStatus(taskId string, status string) error{
 		return err
 	}
 	var stat = ent.CreateStatus(status)
+	if stat == ent.UnkownStatus {
+		extraDetails :=	fmt.Sprintf("status %s",status)
+		err = goErr.InvalidInput(stat,extraDetails,errors.New(""))
+		return err
+	}
 	task.Status = stat
 	return db.UpdateTask(task)
 }

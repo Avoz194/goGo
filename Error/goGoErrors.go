@@ -9,13 +9,13 @@ import (
 func NoSuchEntityError(ent interface{}, extraDetails string, err error) error{
     entType := reflect.TypeOf(ent).Name()
     log.Println(err)
-    return fmt.Errorf("A %s with the '%s' does not exist. Error: %w", entType, extraDetails, err)
+    return fmt.Errorf("A %s with the %s does not exist. Error: %w", entType, extraDetails, err)
 }
 
 func EntityAlreadyExists(ent interface{}, extraDetails string, err error) error{
     entType := reflect.TypeOf(ent).Name()
     log.Println(err)
-    return fmt.Errorf("A %s with the '%s' already exist. Error: %w", entType, extraDetails, err)
+    return fmt.Errorf("A %s with the %s already exist. Error: %w", entType, extraDetails, err)
 }
 
 func InvalidInput(ent interface{}, extraDetails string, err error) error{

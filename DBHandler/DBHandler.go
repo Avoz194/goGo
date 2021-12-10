@@ -114,7 +114,7 @@ func DeleteTask(task ent.Task) error {
 	query := "DELETE FROM Tasks WHERE id =?"
 	_, err = db.Exec(query,task.GetTaskId())
 	if err != nil {
-		msg := fmt.Sprintf("Delete Task with id %s", task.GetTaskId())
+		msg := fmt.Sprintf("Delete Task with id '%s'", task.GetTaskId())
 		return erro.FailedCommitingRequest(msg,err)
 	}
 	return nil
@@ -135,7 +135,7 @@ func GetPerson(id string) (error,ent.Person) {
 	p.SetPersonId(personID)
 
 	if err != nil {
-		extraDetails :=	fmt.Sprintf("id %s", id)
+		extraDetails :=	fmt.Sprintf("id '%s'", id)
 		return erro.NoSuchEntityError(p, extraDetails,err), ent.Person{}
 	}
 	return nil,p
@@ -153,7 +153,7 @@ func GetTask(id string) (error,ent.Task) {
 	var taskID string
 	err = db.QueryRow("SELECT id, title, ownerID, details, statusID, dueDate FROM Tasks where id = ?",id).Scan(&taskID, &t.Title, &t.OwnerId, &t.Details, &t.Status, &date)
 	if err != nil {
-		extraDetails :=	fmt.Sprintf("id %s", id)
+		extraDetails :=	fmt.Sprintf("id '%s'", id)
 		return erro.NoSuchEntityError(t, extraDetails,err), ent.Task{}
 	}
 	t.DueDate = getTime(date)
@@ -170,7 +170,7 @@ func AddPerson(p ent.Person) (error){
 	q := "INSERT INTO Persons VALUES ( ?, ? ,?, ?) "
 	insertResult, err := db.Query(q, p.GetPersonId(), p.Name, p.Email, p.ProgLang)
  	if err != nil {
-		extraDetails :=	fmt.Sprintf("email %s",p.Email)
+		extraDetails :=	fmt.Sprintf("email '%s'",p.Email)
 		return erro.EntityAlreadyExists(p,extraDetails,err)
 	}
 	defer insertResult.Close()
@@ -187,7 +187,7 @@ func AddTask(t ent.Task) error{
 	q := "INSERT INTO Tasks VALUES ( ?, ? ,?, ?, ?, ? )"
 	insertResult, err := db.Query(q, t.GetTaskId(), t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"))
 	if err != nil {
-		extraDetails :=	fmt.Sprintf("id %s", t.OwnerId)
+		extraDetails :=	fmt.Sprintf("id '%s'", t.OwnerId)
 		return erro.NoSuchEntityError(ent.Person{},extraDetails,err)
 	}
 	defer insertResult.Close()
@@ -206,7 +206,7 @@ func UpdateTask(t ent.Task) error{
 	updateResult, err := db.Query(q, t.Title, t.OwnerId, t.Details, t.Status,t.DueDate.Format("2006-01-02"), t.GetTaskId())
 
 	if err != nil {
-		extraDetails :=	fmt.Sprintf("Update Task with id %s", t.GetTaskId())
+		extraDetails :=	fmt.Sprintf("Update Task with id '%s'", t.GetTaskId())
 		return erro.FailedCommitingRequest(extraDetails,err)
 	}
 
@@ -225,7 +225,7 @@ func UpdatePerson(p ent.Person) error{
 	updateResult, err := db.Query(q, p.Name, p.Email, p.ProgLang,  p.GetPersonId())
 
 	if err != nil {
-		extraDetails :=	fmt.Sprintf("email %s",p.Email)
+		extraDetails :=	fmt.Sprintf("email '%s'",p.Email)
 		return erro.EntityAlreadyExists(p,extraDetails,err)
 	}
 
@@ -233,18 +233,21 @@ func UpdatePerson(p ent.Person) error{
 	return nil
 }
 
-func GetPersonTasks(p ent.Person) (error,[]ent.Task) {
+func GetPersonTasks(p ent.Person, status ent.Status) (error,[]ent.Task) {
 
 	err, db := openConnection()
 	if err != nil {
 		return err, []ent.Task{}
 	}
-
+	var results *sql.Rows
 	defer db.Close()
-
-	results, err := db.Query("SELECT * FROM Tasks where ownerid = ?",p.GetPersonId())
+	if status == ent.UnkownStatus{
+		results, err = db.Query("SELECT * FROM Tasks where ownerid = ?",p.GetPersonId())
+	}	else{
+		results, err = db.Query("SELECT * FROM Tasks where ownerid = ? AND statusID = ?",p.GetPersonId(), status)
+	}
 	if err != nil {
-		msg := fmt.Sprintf("Get Tasks for Person with id %s", p.GetPersonId())
+		msg := fmt.Sprintf("Get Tasks for Person with id '%s'", p.GetPersonId())
 		return erro.FailedCommitingRequest(msg,err), []ent.Task{}
 	}
 
@@ -256,7 +259,7 @@ func GetPersonTasks(p ent.Person) (error,[]ent.Task) {
 		// for each row, scan the result into our tag composite object
 		err = results.Scan(&id, &task.Title, &task.OwnerId, &task.Details, &task.Status, &date)
 		if err != nil {
-			msg := fmt.Sprintf("Get Tasks for Person with id %s", p.GetPersonId())
+			msg := fmt.Sprintf("Get Tasks for Person with id '%s'", p.GetPersonId())
 			return erro.FailedCommitingRequest(msg,err), []ent.Task{}
 		}
 		task.DueDate = getTime(date)
