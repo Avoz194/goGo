@@ -157,6 +157,7 @@ func getPeople(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	} else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(personsToHolders(people))
 	}
 }
@@ -170,6 +171,7 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	}else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(personToHolder(p))
 	}
 }
@@ -184,6 +186,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	} else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(personToHolder(p))
 	}
 }
@@ -196,6 +199,8 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
+	}else{
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -207,6 +212,7 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	} else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(tasksToHolders(tasks))
 	}
 }
@@ -235,6 +241,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	}else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
 }
@@ -249,6 +256,7 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	}else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
 }
@@ -260,6 +268,8 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
+	} else{
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -271,6 +281,7 @@ func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	}else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(s.String())
 	}
 }
@@ -284,6 +295,8 @@ func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
+	} else{
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -296,6 +309,7 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	}else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(id)
 	}
 }
@@ -309,6 +323,8 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
+	}else{
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
