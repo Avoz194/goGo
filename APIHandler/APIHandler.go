@@ -154,9 +154,7 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Location",fmt.Sprintf("/api/people/%s", p.GetPersonId()))
 		w.Header().Set("x-Created-Id", p.GetPersonId())
-
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(personToHolder(p))
 	}
 }
 
@@ -249,7 +247,6 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location",fmt.Sprintf("/api/tasks/%s", t.GetTaskId()))
 		w.Header().Set("x-Created-Id", t.GetTaskId())
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
 }
 
