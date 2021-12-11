@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	entities "github.com/Avoz194/goGo/Entities"
 	mod "github.com/Avoz194/goGo/Model"
@@ -38,10 +39,14 @@ func CreateServer(){
 		})
 	server.HandleFunc("/api/people/", functionHandler).Methods("POST", "GET")
 	server.HandleFunc("/api/people/{id}", functionHandler).Methods("GET","PATCH", "DELETE")
-	server.HandleFunc("/api/people/{id}/tasks/", functionHandler).Methods("GET", "POST")
 	server.HandleFunc("/api/tasks/{id}", functionHandler).Methods("GET", "PATCH", "DELETE")
 	server.HandleFunc("/api/tasks/{id}/status", functionHandler).Methods("GET", "PUT")
 	server.HandleFunc("/api/tasks/{id}/owner", getOwnerId).Methods("GET", "PUT")
+
+	//Different format for the optional query
+	server.Path("/api/people/{id}/tasks/").Queries("status", "{status}").HandlerFunc(functionHandler).Methods("GET")
+	server.Path("/api/people/{id}/tasks/").HandlerFunc(functionHandler).Methods("GET", "POST")
+
 	http.Handle("/", server)
 
 	c :=  cors.New(cors.Options{
@@ -65,7 +70,6 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPeople(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -78,7 +82,6 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "GET" {
 					getPerson(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -89,7 +92,14 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "POST" {
 					addNewTask(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}
+		case fmt.Sprintf("/api/people/%s/tasks/?status=%s", params["id"],params["status"]):
+			{
+				if method == "GET" {
+					getPersonTasks(w, r)
+				} else {
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -102,7 +112,6 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "DELETE" {
 					removeTask(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -113,7 +122,6 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setTaskStatus(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
@@ -124,13 +132,11 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 				} else if method == "PUT" {
 					setOwner(w, r)
 				} else {
-					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusNotFound)
 				}
 			}
 	default:
 		{
-			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}
@@ -145,8 +151,10 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte (err.Error()))
 	} else {
+
+		w.Header().Set("Location",fmt.Sprintf("/api/people/%s", p.GetPersonId()))
+		w.Header().Set("x-Created-Id", p.GetPersonId())
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(personToHolder(p))
 	}
 }
 
@@ -154,7 +162,7 @@ func getPeople(w http.ResponseWriter, r *http.Request) {
 	err, people := mod.GetAllPersons()
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -168,7 +176,7 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	err,p := mod.GetPerson(params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -183,7 +191,7 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	err, p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -197,7 +205,7 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	// return err in case of failure
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else{
 		w.WriteHeader(http.StatusOK)
@@ -206,10 +214,11 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 
 func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	err, tasks := mod.GetPersonTasks(params["id"])
+
+	err, tasks := mod.GetPersonTasks(params["id"], params["status"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -225,11 +234,19 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		errDesc := err.Error()
+		if strings.Contains(errDesc, "already") {
+			w.WriteHeader(http.StatusBadRequest) //If the error is due to already exists, use this status
+		} else if strings.Contains(errDesc, "does not") {
+			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		w.Write([]byte (err.Error()))
 	} else {
+		w.Header().Set("Location",fmt.Sprintf("/api/tasks/%s", t.GetTaskId()))
+		w.Header().Set("x-Created-Id", t.GetTaskId())
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(taskToHolder(t))
 	}
 }
 
@@ -238,7 +255,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	err, t := mod.GetTaskDetails(params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -250,10 +267,10 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
-	err, t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
+	err, t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate, holder.OwnerId)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -266,7 +283,7 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 	err := mod.RemoveTask(params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	} else{
 		w.WriteHeader(http.StatusOK)
@@ -278,7 +295,7 @@ func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	err, s := mod.GetStatusForTask(params["id"])
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -293,10 +310,15 @@ func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	err := mod.SetTaskStatus(params["id"], holder)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		errDesc := err.Error()
+		if strings.Contains(errDesc, "does not") {
+			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		w.Write([]byte (err.Error()))
 	} else{
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -306,7 +328,7 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -321,10 +343,15 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 	err := mod.SetTaskOwner(params["id"], ownerID)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		errDesc := err.Error()
+		if strings.Contains(errDesc, "does not") {
+			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		w.Write([]byte (err.Error()))
 	}else{
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 

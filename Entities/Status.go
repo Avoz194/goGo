@@ -9,6 +9,7 @@ const (
 	unknown = -1
 )
 
+var UnkownStatus = Status(unknown)
 var AllStatuses = []string{"done", "active"}
 var AllStatusIDs = []Status{done, active}
 
@@ -21,8 +22,9 @@ func CreateStatus(sString string) Status{
 	switch  sString {
 	case "active": return active
 	case "done": return done
+	case "": return active
 	}
-	return -1;
+	return unknown;
 }
 func (s Status) isDone() bool {
 	return s == done
