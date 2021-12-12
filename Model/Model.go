@@ -1,36 +1,35 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
-	goErr "github.com/Avoz194/goGo/Error"
+	goErr "github.com/Avoz194/goGo/GoGoError"
 	"time"
 )
 
-func AddPerson(name, email, progLang string) (error, ent.Person) {
+func AddPerson(name, email, progLang string) (goErr.GoGoError, ent.Person) {
 	p := ent.CreatePerson(name, email, progLang)
 	err := db.AddPerson(p)
-	if err != nil{
+	if err.GetError() != nil{
 		return err,ent.Person{}
 	}
 	return GetPerson(p.GetPersonId())
 }
 
 // returning list of person, should return a list of person in json probably
-func GetAllPersons() (error,[]ent.Person){
+func GetAllPersons() (goErr.GoGoError,[]ent.Person){
 	return db.GetAllPersons()
 }
 
-func GetPerson(id string) (error,ent.Person){
+func GetPerson(id string) (goErr.GoGoError,ent.Person){
 	return db.GetPerson(id)
 }
 
-func SetPersonDetails(id, name, email, progLang string) (error ,ent.Person){
-	err,p := GetPerson(id)
-	if err != nil{
-		return err,ent.Person{}
+func SetPersonDetails(id, name, email, progLang string) (goErr.GoGoError ,ent.Person){
+	goErr,p := GetPerson(id)
+	if goErr.GetError() != nil{
+		return goErr,ent.Person{}
 	}
 	//update if not empty
 	if email!= ""{
@@ -42,47 +41,45 @@ func SetPersonDetails(id, name, email, progLang string) (error ,ent.Person){
 	if progLang!= ""{
 		p.ProgLang = progLang
 	}
-	err = db.UpdatePerson(p)
-	if err != nil{
-		return err, ent.Person{}
+	goErr = db.UpdatePerson(p)
+	if goErr.GetError() != nil{
+		return goErr, ent.Person{}
 	}
 	return GetPerson(p.GetPersonId())
 }
-func RemovePerson(id string) error{
-	err, p := GetPerson(id)
-	if err != nil{
-		return err
+func RemovePerson(id string) goErr.GoGoError{
+	goErr, p := GetPerson(id)
+	if goErr.GetError() != nil{
+		return goErr
 	}
 	return db.DeletePerson(p)
 }
 
-func GetPersonTasks(id string, status string) (error, []ent.Task){
+func GetPersonTasks(id string, status string) (goErr.GoGoError, []ent.Task){
 	err, p := GetPerson(id)
-	if err != nil{
+	if err.GetError() != nil{
 		return err, []ent.Task{}
 	}
 	stat := ent.UnkownStatus
 	if status != ""{
 		stat = ent.CreateStatus(status)
 		if stat == ent.UnkownStatus {
-			extraDetails :=	fmt.Sprintf("status %s",status)
-			err = goErr.InvalidInput(stat,extraDetails,errors.New(""))
+			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
 			return err, []ent.Task{}
 		}
 	}
 	return db.GetPersonTasks(p,stat)
 }
 
-func AddNewTask(personId, title , details string, status string, dueDate string) (error,ent.Task){
+func AddNewTask(personId, title , details string, status string, dueDate string) (goErr.GoGoError,ent.Task){
 	dueDateT := getTime(dueDate)
 	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
 	if task.Status == ent.UnkownStatus {
-		extraDetails :=	fmt.Sprintf("status %s",status)
-		err := goErr.InvalidInput(task.Status,extraDetails,errors.New(""))
+		err := goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
 		return err, ent.Task{}
 	}
 	err := db.AddTask(task)
-	if err != nil {
+	if err.GetError() != nil {
 		return err, ent.Task{}
 	}
 	return GetTaskDetails(task.GetTaskId())
@@ -97,12 +94,12 @@ func getTime(date string) time.Time{
 }
 
 //RaiseError if no TaskID
-func GetTaskDetails(taskId string) (error, ent.Task) {
+func GetTaskDetails(taskId string) (goErr.GoGoError, ent.Task) {
 	return db.GetTask(taskId)
 }
-func SetTaskDetails(taskID , title , details string, status string, dueDate string, ownerid string) (error, ent.Task) {
+func SetTaskDetails(taskID , title , details string, status string, dueDate string, ownerid string) (goErr.GoGoError, ent.Task) {
 	err, t := GetTaskDetails(taskID)
-	if err != nil{
+	if err.GetError() != nil{
 		return err, ent.Task{}
 	}
 
@@ -118,74 +115,72 @@ func SetTaskDetails(taskID , title , details string, status string, dueDate stri
 	if status!=""{
 		var stat = ent.CreateStatus(status)
 		if stat == ent.UnkownStatus {
-			extraDetails := fmt.Sprintf("status %s", status)
-			err = goErr.InvalidInput(stat, extraDetails, errors.New(""))
+			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
 			return err, ent.Task{}
 		}
 		t.Status = stat
 	}
 	if ownerid!=""{
-		err, _ := GetPerson(ownerid)
-		if err != nil{
+		err, _ = GetPerson(ownerid)
+		if err.GetError() != nil{
 			return err, ent.Task{}
 		}
 		t.OwnerId = ownerid
 	}
 
 	err = db.UpdateTask(t)
-	if err != nil{
+	if err.GetError() != nil{
 		return err, ent.Task{}
 	}
 	return GetTaskDetails(taskID)
 }
 
-func RemoveTask(id string) error {
+func RemoveTask(id string) goErr.GoGoError {
 	err, t := GetTaskDetails(id)
-	if err != nil{
+	if err.GetError() != nil{
 		return err
 	}
 	return db.DeleteTask(t)
 }
 
-func GetStatusForTask(taskId string) (error, ent.Status){
+func GetStatusForTask(taskId string) (goErr.GoGoError, ent.Status){
 	err, task := GetTaskDetails(taskId)
-	if err != nil{
+	if err.GetError() != nil{
 		return err, -1
 	}
-	return nil,task.Status
+	return goErr.GoGoError{},task.Status
 }
 
-func GetOwnerForTask(taskId string) (error, string){
+func GetOwnerForTask(taskId string) (goErr.GoGoError, string){
 	err, task := GetTaskDetails(taskId)
-	if err != nil{
+	if err.GetError() != nil{
 		return err, ""
 	}
-	return nil, task.OwnerId
+	return goErr.GoGoError{}, task.OwnerId
 }
 
 //Validate Owner ID
-func SetTaskOwner(taskId string, ownerID string) error{
+func SetTaskOwner(taskId string, ownerID string) goErr.GoGoError{
 	err, _ := GetPerson(ownerID)
-	if err != nil{
+	if err.GetError() != nil{
 		return err
 	}
 	err, task := GetTaskDetails(taskId)
-	if err != nil{
+	if err.GetError() != nil{
 		return err
 	}
 	task.OwnerId = ownerID
 	return db.UpdateTask(task)
 }
 
-func SetTaskStatus(taskId string, status string) error{
+func SetTaskStatus(taskId string, status string) goErr.GoGoError{
 	err, task := GetTaskDetails(taskId)
-	if err != nil{
+	if err.GetError() != nil{
 		return err
 	}
 	var stat = ent.CreateStatus(status)
 	if stat == ent.UnkownStatus {
-		extraDetails :=	fmt.Sprintf("status %s",status)
-		err = goErr.InvalidInput(stat,extraDetails,errors.New(""))
+		err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}	
 		return err
 	}
 	task.Status = stat
