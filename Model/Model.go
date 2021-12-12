@@ -180,7 +180,7 @@ func SetTaskStatus(taskId string, status string) goErr.GoGoError{
 	}
 	var stat = ent.CreateStatus(status)
 	if stat == ent.UnkownStatus {
-		err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
+		err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}	
 		return err
 	}
 	task.Status = stat
