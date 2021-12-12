@@ -7,6 +7,7 @@ import (
 	erro "github.com/Avoz194/goGo/GoGoError"
 	"github.com/go-sql-driver/mysql"
 	"log"
+	"os"
 	"time"
 )
 
@@ -18,8 +19,8 @@ const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT 
 
 func openConnection() (erro.GoGoError,*sql.DB) {
 	cfg := mysql.Config{
-		User:   "root",
-		Passwd: "noMoreTests123!",
+		User:   os.Getenv("GOGODBUSER"),
+		Passwd: os.Getenv("GOGODBPASS"),
 		Net:    "tcp",
 		Addr:   IP,
 		DBName: DATABASE_NAME,
@@ -30,13 +31,20 @@ func openConnection() (erro.GoGoError,*sql.DB) {
 		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: err}
 		return goErr,nil
 	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: pingErr}
+		return goErr, nil
+	}
 	return erro.GoGoError{},db
 }
 
 func CreateDatabase(){
 	cfg := mysql.Config{
-		User:   "root",
-		Passwd: "noMoreTests123!",
+		User:   os.Getenv("GOGODBUSER"),
+		Passwd: os.Getenv("GOGODBPASS"),
 		Net:    "tcp",
 		Addr:   "127.0.0.1:3306",
 	}
@@ -47,6 +55,10 @@ func CreateDatabase(){
 	}
 	defer db.Close()
 
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+	}
 	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME)
 	if err != nil {
 		panic(err)
