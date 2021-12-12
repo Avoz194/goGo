@@ -3,14 +3,13 @@ package APIHandler
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
-	"strings"
-
 	entities "github.com/Avoz194/goGo/Entities"
+	"github.com/Avoz194/goGo/GoGoError"
 	mod "github.com/Avoz194/goGo/Model"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"log"
+	"net/http"
 )
 
 type PersonHolder struct {
@@ -146,12 +145,11 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	err,p := mod.AddPerson(holder.Name, holder.Email, holder.ProgLang)
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else {
-
 		w.Header().Set("Location",fmt.Sprintf("/api/people/%s", p.GetPersonId()))
 		w.Header().Set("x-Created-Id", p.GetPersonId())
 		w.WriteHeader(http.StatusCreated)
@@ -160,9 +158,9 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 
 func getPeople(w http.ResponseWriter, r *http.Request) {
 	err, people := mod.GetAllPersons()
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -174,9 +172,9 @@ func getPeople(w http.ResponseWriter, r *http.Request) {
 func getPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err,p := mod.GetPerson(params["id"])
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -189,9 +187,9 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	err, p := mod.SetPersonDetails(params["id"], holder.Name, holder.Email, holder.ProgLang)
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -203,9 +201,9 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err := mod.RemovePerson(params["id"])
 	// return err in case of failure
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else{
 		w.WriteHeader(http.StatusOK)
@@ -216,9 +214,9 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	err, tasks := mod.GetPersonTasks(params["id"], params["status"])
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else {
 		w.WriteHeader(http.StatusOK)
@@ -232,16 +230,9 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&holder)
 	err, t := mod.AddNewTask(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate)
 
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		errDesc := err.Error()
-		if strings.Contains(errDesc, "already") {
-			w.WriteHeader(http.StatusBadRequest) //If the error is due to already exists, use this status
-		} else if strings.Contains(errDesc, "does not") {
-			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else {
 		w.Header().Set("Location",fmt.Sprintf("/api/tasks/%s", t.GetTaskId()))
@@ -253,9 +244,9 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 func getTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, t := mod.GetTaskDetails(params["id"])
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -268,9 +259,9 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	var holder TaskHolder
 	json.NewDecoder(r.Body).Decode(&holder)
 	err, t := mod.SetTaskDetails(params["id"], holder.Title, holder.Details, holder.Status, holder.DueDate, holder.OwnerId)
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -281,9 +272,9 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 func removeTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err := mod.RemoveTask(params["id"])
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else{
 		w.WriteHeader(http.StatusOK)
@@ -293,9 +284,9 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, s := mod.GetStatusForTask(params["id"])
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -308,14 +299,9 @@ func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	var holder string
 	json.NewDecoder(r.Body).Decode(&holder)
 	err := mod.SetTaskStatus(params["id"], holder)
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		errDesc := err.Error()
-		if strings.Contains(errDesc, "does not") {
-			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	} else{
 		w.WriteHeader(http.StatusNoContent)
@@ -326,9 +312,9 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, id := mod.GetOwnerForTask(params["id"])
 
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else {
 		w.WriteHeader(http.StatusOK)
@@ -341,14 +327,9 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 	var ownerID string
 	json.NewDecoder(r.Body).Decode(&ownerID)
 	err := mod.SetTaskOwner(params["id"], ownerID)
-	if err != nil {
+	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
-		errDesc := err.Error()
-		if strings.Contains(errDesc, "does not") {
-			w.WriteHeader(http.StatusNotFound) //If the error is due to doesn't exists, use this status
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		w.WriteHeader(getAPIStatusForError(err))
 		w.Write([]byte (err.Error()))
 	}else{
 		w.WriteHeader(http.StatusNoContent)
@@ -390,4 +371,15 @@ func personsToHolders(persons []entities.Person) []PersonHolder{
 		holders = append(holders, personToHolder(person))
 	}
 	return holders
+}
+
+func getAPIStatusForError(goErr GoGoError.GoGoError) int{
+	switch  goErr.ErrorNum {
+	case GoGoError.NoSuchEntityError: return  http.StatusNotFound
+	case GoGoError.FailedCommitingRequest: return  http.StatusNotFound
+	case GoGoError.EntityAlreadyExists: return http.StatusBadRequest
+	case GoGoError.TechnicalFailrue: return http.StatusNotFound
+	case GoGoError.InvalidInput: return http.StatusBadRequest
+	}
+	return http.StatusNotFound
 }
