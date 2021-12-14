@@ -73,3 +73,27 @@ func insertStatuses() erro.GoGoError{
 	}
 	return erro.GoGoError{}
 }
+
+func openConnection() (erro.GoGoError,*sql.DB) {
+	cfg := mysql.Config{
+		User:   os.Getenv("GOGODBUSER"),
+		Passwd: os.Getenv("GOGODBPASS"),
+		Net:    "tcp",
+		Addr:   IP,
+		DBName: DATABASE_NAME,
+	}
+	db, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		log.Fatal("Failed To connect to MySQL")
+		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: err}
+		return goErr,nil
+	}
+
+	pingErr := db.Ping()
+	if pingErr != nil {
+		log.Fatal(pingErr)
+		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: pingErr}
+		return goErr, nil
+	}
+	return erro.GoGoError{},db
+}

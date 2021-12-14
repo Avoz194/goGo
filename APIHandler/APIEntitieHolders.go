@@ -31,7 +31,7 @@ func taskToHolder(task entities.Task) TaskHolder{
 }
 
 func tasksToHolders(tasks []entities.Task) []TaskHolder{
-	var holders []TaskHolder
+	holders:= []TaskHolder{}
 	for _,task := range tasks {
 		holders = append(holders, taskToHolder(task))
 	}
@@ -49,7 +49,7 @@ func personToHolder(person entities.Person) PersonHolder{
 }
 
 func personsToHolders(persons []entities.Person) []PersonHolder{
-	var holders []PersonHolder
+	holders := []PersonHolder{}
 	for _,person := range persons {
 		holders = append(holders, personToHolder(person))
 	}

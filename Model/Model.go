@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	db "github.com/Avoz194/goGo/DBHandler"
 	ent "github.com/Avoz194/goGo/Entities"
 	goErr "github.com/Avoz194/goGo/GoGoError"
@@ -17,7 +16,6 @@ func AddPerson(name, email, progLang string) (goErr.GoGoError, ent.Person) {
 	return GetPerson(p.GetPersonId())
 }
 
-// returning list of person, should return a list of person in json probably
 func GetAllPersons() (goErr.GoGoError,[]ent.Person){
 	return db.GetAllPersons()
 }
@@ -26,6 +24,7 @@ func GetPerson(id string) (goErr.GoGoError,ent.Person){
 	return db.GetPerson(id)
 }
 
+//	If one of the parameters is empty, the original value will remain.
 func SetPersonDetails(id, name, email, progLang string) (goErr.GoGoError ,ent.Person){
 	goErr,p := GetPerson(id)
 	if goErr.GetError() != nil{
@@ -47,14 +46,23 @@ func SetPersonDetails(id, name, email, progLang string) (goErr.GoGoError ,ent.Pe
 	}
 	return GetPerson(p.GetPersonId())
 }
+
+//	Before deleting a person, delete all it's tasks.
 func RemovePerson(id string) goErr.GoGoError{
 	goErr, p := GetPerson(id)
 	if goErr.GetError() != nil{
 		return goErr
 	}
+	//delete all tasks.
+	goErr, tasks := GetPersonTasks(id, "")
+	for _,task:= range tasks{
+		RemoveTask(task.GetTaskId())
+	}
 	return db.DeletePerson(p)
 }
 
+//	If status is empty returns 'active' and 'done' tasks.
+//	else return all the 'active' or 'done' task according to its value.
 func GetPersonTasks(id string, status string) (goErr.GoGoError, []ent.Task){
 	err, p := GetPerson(id)
 	if err.GetError() != nil{
@@ -64,7 +72,7 @@ func GetPersonTasks(id string, status string) (goErr.GoGoError, []ent.Task){
 	if status != ""{
 		stat = ent.CreateStatus(status)
 		if stat == ent.UnkownStatus {
-			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
+			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task status", ErrorOnValue: status}
 			return err, []ent.Task{}
 		}
 	}
@@ -72,31 +80,37 @@ func GetPersonTasks(id string, status string) (goErr.GoGoError, []ent.Task){
 }
 
 func AddNewTask(personId, title , details string, status string, dueDate string) (goErr.GoGoError,ent.Task){
-	dueDateT := getTime(dueDate)
-	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
-	if task.Status == ent.UnkownStatus {
-		err := goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
+	err, dueDateT := getTime(dueDate)
+	if err.GetError() != nil {
 		return err, ent.Task{}
 	}
-	err := db.AddTask(task)
+	task := ent.CreateTask(title, personId, details, ent.CreateStatus(status) , dueDateT)
+	if task.Status == ent.UnkownStatus {
+		err := goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task status", ErrorOnValue: status}
+		return err, ent.Task{}
+	}
+	err = db.AddTask(task)
 	if err.GetError() != nil {
 		return err, ent.Task{}
 	}
 	return GetTaskDetails(task.GetTaskId())
 }
 
-func getTime(date string) time.Time{
+//	return Time value, by the format: YYYY-MM-DD.
+func getTime(date string) (goErr.GoGoError,time.Time){
 	dueDateT, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		fmt.Println(err)
+		err := goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task dueDate", ErrorOnValue: date}
+		return err, time.Time{}
 	}
-	return dueDateT
+	return goErr.GoGoError{},dueDateT
 }
 
-//RaiseError if no TaskID
 func GetTaskDetails(taskId string) (goErr.GoGoError, ent.Task) {
 	return db.GetTask(taskId)
 }
+
+//	If one of the parameters is empty, the original value will remain.
 func SetTaskDetails(taskID , title , details string, status string, dueDate string, ownerid string) (goErr.GoGoError, ent.Task) {
 	err, t := GetTaskDetails(taskID)
 	if err.GetError() != nil{
@@ -110,12 +124,15 @@ func SetTaskDetails(taskID , title , details string, status string, dueDate stri
 		t.Details = details
 	}
 	if dueDate!= "" {
-		t.DueDate = getTime(dueDate)
+		err, t.DueDate = getTime(dueDate)
+		if err.GetError() != nil {
+			return err, ent.Task{}
+		}
 	}
 	if status!=""{
 		var stat = ent.CreateStatus(status)
 		if stat == ent.UnkownStatus {
-			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}
+			err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task status", ErrorOnValue: status}
 			return err, ent.Task{}
 		}
 		t.Status = stat
@@ -159,7 +176,7 @@ func GetOwnerForTask(taskId string) (goErr.GoGoError, string){
 	return goErr.GoGoError{}, task.OwnerId
 }
 
-//Validate Owner ID
+//	only if the new ownerId is already exist, update the task.
 func SetTaskOwner(taskId string, ownerID string) goErr.GoGoError{
 	err, _ := GetPerson(ownerID)
 	if err.GetError() != nil{
@@ -178,9 +195,10 @@ func SetTaskStatus(taskId string, status string) goErr.GoGoError{
 	if err.GetError() != nil{
 		return err
 	}
+
 	var stat = ent.CreateStatus(status)
 	if stat == ent.UnkownStatus {
-		err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "status", ErrorOnValue: status}	
+		err = goErr.GoGoError{ErrorNum: goErr.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task status", ErrorOnValue: status}
 		return err
 	}
 	task.Status = stat

@@ -17,7 +17,7 @@ func CreateServer(){
 	server.HandleFunc("/api/people/{id}", functionHandler).Methods("GET","PATCH", "DELETE")
 	server.HandleFunc("/api/tasks/{id}", functionHandler).Methods("GET", "PATCH", "DELETE")
 	server.HandleFunc("/api/tasks/{id}/status", functionHandler).Methods("GET", "PUT")
-	server.HandleFunc("/api/tasks/{id}/owner", getOwnerId).Methods("GET", "PUT")
+	server.HandleFunc("/api/tasks/{id}/owner", functionHandler).Methods("GET", "PUT")
 
 	//Different format for the optional query
 	server.Path("/api/people/{id}/tasks/").Queries("status", "{status}").HandlerFunc(functionHandler).Methods("GET")
