@@ -16,6 +16,13 @@ const (
     TechnicalFailrue
 )
 
+//GoGoError
+//  ErrorNum: The type of the error.
+//  EntityType: The type of the Entity on which the error occurs (Person, Task etc).
+//  ErrorOnKey: The invalid field.
+//  ErrorOnValue: The worng value.
+//  AdditionalMsg: Optional information (func name).
+//  Err: The original error received.
 type GoGoError struct{
     ErrorNum ErrorNum
     EntityType interface{}
@@ -25,6 +32,7 @@ type GoGoError struct{
     Err error
 }
 
+// GetError returning the goGoError message, according to the ErrorNum.
 func (goErr *GoGoError)GetError() error{
     if goErr.EntityType != nil {
         log.Println(goErr.Err)

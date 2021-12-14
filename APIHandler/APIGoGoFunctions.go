@@ -9,7 +9,8 @@ import (
 	"net/http"
 )
 
-
+//	get the path, method and the params of the API and by them use the appropriate func.
+//	if could not find a func, return StatusNotFound.
 func functionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uri := r.RequestURI

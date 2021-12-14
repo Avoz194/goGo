@@ -13,7 +13,9 @@ const CREATE_PERSON_TABLE = "CREATE TABLE IF NOT EXISTS Persons(id varchar(50) N
 const CREATE_TASK_STATUS_TABLE = "CREATE TABLE IF NOT EXISTS TaskStatus(id integer NOT NULL, title varchar(50), PRIMARY KEY (id)); "
 const CREATE_TASKS_TABLE = "CREATE TABLE IF NOT EXISTS Tasks(id varchar(50) NOT NULL, title varchar(50), ownerId varchar(50) NOT NULL, details varchar(50), statusID integer NOT NULL, dueDate date, PRIMARY KEY (id), CONSTRAINT FK_TaskToOwner FOREIGN KEY (ownerId) REFERENCES Persons(id), CONSTRAINT FK_TaskToStatus FOREIGN KEY (statusID) REFERENCES TaskStatus(id));"
 
-
+//	Open a connection to MySQL using environment variables.
+//	if the connection failed panic.
+//	Create Person, Task and Status tables if doest not exist.
 func CreateDatabase(){
 	cfg := mysql.Config{
 		User:   os.Getenv("GOGODBUSER"),
@@ -22,7 +24,6 @@ func CreateDatabase(){
 		Addr:   "127.0.0.1:3306",
 	}
 	db, err:= sql.Open("mysql", cfg.FormatDSN())
-	//db.Exec("DROP DATABASE " + DATABASE_NAME)
 	if err != nil {
 		panic(err)
 	}
@@ -74,6 +75,8 @@ func insertStatuses() erro.GoGoError{
 	return erro.GoGoError{}
 }
 
+//	Open a connection to MySQL using environment variables.
+//	if the connection failed return TechnicalFailrue error.
 func openConnection() (erro.GoGoError,*sql.DB) {
 	cfg := mysql.Config{
 		User:   os.Getenv("GOGODBUSER"),

@@ -7,6 +7,9 @@ import (
 	"net/http"
 )
 
+//	Creating an new mux server.
+//	define the valid paths and methods of the server.
+//	define the cors.
 func CreateServer(){
 	server := mux.NewRouter()
 	server.Methods("OPTIONS").HandlerFunc(

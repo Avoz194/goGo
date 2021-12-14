@@ -9,7 +9,7 @@ const (
 	unknown = -1
 )
 
-var UnkownStatus = Status(unknown)
+var UnknownStatus = Status(unknown)
 var AllStatuses = []string{"done", "active"}
 var AllStatusIDs = []Status{done, active}
 
@@ -17,7 +17,10 @@ func (s Status) String() string {
 	return AllStatuses[s]
 }
 
-//Change default for Status
+
+//	Creating a Status according to the input string.
+//	an empty string is 'active' value by default.
+//	if the input is invalid the status get 'unknown' value.
 func CreateStatus(sString string) Status{
 	switch  sString {
 	case "active": return active
