@@ -9,8 +9,8 @@ import (
 	"net/http"
 )
 
-//	get the path, method and the params of the API and by them use the appropriate func.
-//	if could not find a func, return StatusNotFound.
+//	get the path, method and the params of the API and according to them use the appropriate func.
+//	If the data was invalid, return StatusNotFound.
 func functionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	uri := r.RequestURI
@@ -96,6 +96,10 @@ func functionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Decode the information of the Person from the Json input, and put in inside the PersonHolder.
+//	any other field in the Json input except 'Name', 'Email' and 'ProgLang' will be ignored.
+//	on success, return StatusCreated-201 code with Location and 'x-Created-Id' headers.
+//	on failure, return 'text/plain' with the information of the error.
 func addPerson(w http.ResponseWriter, r *http.Request) {
 	var holder PersonHolder
 	json.NewDecoder(r.Body).Decode(&holder)
@@ -111,6 +115,9 @@ func addPerson(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Get a Person array of all the people in the DB.
+//	on success, return StatusOK-200 code, transform the Person array to PersonHolder array and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func getPeople(w http.ResponseWriter, r *http.Request) {
 	err, people := mod.GetAllPersons()
 	if err.GetError() != nil {
@@ -123,7 +130,9 @@ func getPeople(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//need to add case of not exist
+//	Get the Person with the id given in the path.
+//	on success, return StatusOK-200 code, transform the Person to PersonHolder and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func getPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err,p := mod.GetPerson(params["id"])
@@ -137,6 +146,10 @@ func getPerson(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Update a Person with the id given in the path, with the details which decoded from the Json input.
+//	any other field in the Json input except 'Name', 'Email' and 'ProgLang' will be ignored.
+//	on success, return StatusOK-200 code, transform the Person to PersonHolder and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func updatePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder PersonHolder
@@ -152,10 +165,12 @@ func updatePerson(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Delete the Person with the id given in the path.
+//	on success, return StatusOK-200 code.
+//	on failure, return 'text/plain' with the information of the error.
 func deletePerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err := mod.RemovePerson(params["id"])
-	// return err in case of failure
 	if err.GetError() != nil {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(getAPIStatusForError(err))
@@ -165,6 +180,11 @@ func deletePerson(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Get the Task array of a Person with id given in the path.
+//	if a 'status' parameter was given, return all the Tasks according to the parameter value.
+//	if a 'status' parameter was not given, return all Tasks.
+//	on success, return StatusOK-200 code, transform the Task array to TaskHolder array and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -179,6 +199,11 @@ func getPersonTasks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Add a new Task to the Person with the id given in the path.
+//	Decode the information of the Task from the Json input, and put in inside the TaskHolder.
+//	any other field in the Json input except 'Title', 'Details', 'Status' and 'DueDate' will be ignored.
+//	on success, return StatusCreated-201 code with Location and 'x-Created-Id' headers.
+//	on failure, return 'text/plain' with the information of the error.
 func addNewTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder TaskHolder
@@ -196,6 +221,9 @@ func addNewTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Get the Task with the id given in the path.
+//	on success, return StatusOK-200 code, transform the Task to TaskHolder and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func getTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, t := mod.GetTaskDetails(params["id"])
@@ -209,6 +237,10 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Update a Task with the id given in the path, with the details which decoded from the Json input.
+//	any other field in the Json input except 'Title', 'Details', 'Status', 'DueDate' and 'OwnerId' will be ignored.
+//	on success, return StatusOK-200 code, transform the Task to TaskHolder and encode it.
+//	on failure, return 'text/plain' with the information of the error.
 func updateTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder TaskHolder
@@ -224,6 +256,9 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Delete the Task with the id given in the path.
+//	on success, return StatusOK-200 code.
+//	on failure, return 'text/plain' with the information of the error.
 func removeTask(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err := mod.RemoveTask(params["id"])
@@ -236,6 +271,9 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Get the Status of Task with the id given in the path.
+//	on success, return StatusOK-200 code, and encode the task's status.
+//	on failure, return 'text/plain' with the information of the error.
 func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, s := mod.GetStatusForTask(params["id"])
@@ -249,6 +287,10 @@ func getTaskStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Update the Status of the Task with the id given in the path.
+//	set the status to the value which decoded from the input.
+//	on success, return StatusNoContent-204 code.
+//	on failure, return 'text/plain' with the information of the error.
 func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var holder string
@@ -263,6 +305,9 @@ func setTaskStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Get the Person ID who own the Task with the id given in the path.
+//	on success, return StatusOK-200 code, and encode the task's OwnerId.
+//	on failure, return 'text/plain' with the information of the error.
 func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err, id := mod.GetOwnerForTask(params["id"])
@@ -277,6 +322,10 @@ func getOwnerId(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//	Update the OwnerId of the Task with the id given in the path.
+//	set the OwnerId to the value which decoded from the input.
+//	on success, return StatusNoContent-204 code.
+//	on failure, return 'text/plain' with the information of the error.
 func setOwner(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var ownerID string
@@ -291,7 +340,7 @@ func setOwner(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
+//	For each type of goGoError, return the appropriate http status code.
 func getAPIStatusForError(goErr GoGoError.GoGoError) int {
 	switch goErr.ErrorNum {
 	case GoGoError.NoSuchEntityError:

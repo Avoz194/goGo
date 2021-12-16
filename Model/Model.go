@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//	Add a new Person, and if its id already exist generate a new id.
+//	Add a new Person to the DB, and if its id already exist generate a new id.
 func AddPerson(name, email, progLang string) (goErr.GoGoError, ent.Person) {
 	p := ent.CreatePerson(name, email, progLang)
 	// check if the Person id already exist and generate a new id if needed
@@ -35,12 +35,15 @@ func GetPerson(id string) (goErr.GoGoError,ent.Person){
 	return db.GetPerson(id)
 }
 
-//	If one of the parameters is empty, the original value will remain.
+//	Find the Person with the same id, and edit his details in the DB.
+//	If the id does not exist in the DB return ERR.
+//	If one of the parameters is empty, then the original value of this parameter will remain.
 func SetPersonDetails(id, name, email, progLang string) (goErr.GoGoError ,ent.Person){
 	goErr,p := GetPerson(id)
 	if goErr.GetError() != nil{
 		return goErr,ent.Person{}
 	}
+
 	//update if not empty
 	if email!= ""{
 		p.Email = email
@@ -58,6 +61,7 @@ func SetPersonDetails(id, name, email, progLang string) (goErr.GoGoError ,ent.Pe
 	return GetPerson(p.GetPersonId())
 }
 
+//	Delete only an exists person.
 //	Before deleting a person, delete all it's tasks.
 func RemovePerson(id string) goErr.GoGoError{
 	goErr, p := GetPerson(id)
@@ -72,6 +76,7 @@ func RemovePerson(id string) goErr.GoGoError{
 	return db.DeletePerson(p)
 }
 
+//	Get the Tasks of an exists Person from the DB.
 //	If status is empty returns 'active' and 'done' tasks.
 //	else return all the 'active' or 'done' task according to its value.
 //	if the status value is invalid ('unknown') returning InvalidInput error.
@@ -90,6 +95,7 @@ func GetPersonTasks(id string, status string) (goErr.GoGoError, []ent.Task){
 	}
 	return db.GetPersonTasks(p,stat)
 }
+
 //	Add a new Task, and if its id already exist generate a new id.
 //	if the status value is invalid ('unknown') returning InvalidInput error.
 func AddNewTask(personId, title , details string, status string, dueDate string) (goErr.GoGoError,ent.Task){
@@ -123,7 +129,9 @@ func GetTaskDetails(taskId string) (goErr.GoGoError, ent.Task) {
 	return db.GetTask(taskId)
 }
 
-//	If one of the parameters is empty, the original value will remain.
+//	Find the Task with the same id, and edit his details in the DB.
+//	If the id does not exist in the DB return ERR.
+//	If one of the parameters is empty, then the original value of this parameter will remain.
 //	if the status value is invalid ('unknown'), or the Time format, returning InvalidInput error.
 func SetTaskDetails(taskID , title , details string, status string, dueDate string, ownerid string) (goErr.GoGoError, ent.Task) {
 	err, t := GetTaskDetails(taskID)
@@ -166,6 +174,7 @@ func SetTaskDetails(taskID , title , details string, status string, dueDate stri
 	return GetTaskDetails(taskID)
 }
 
+//	Get the Task with the Same id, and only if exist delete it.
 func RemoveTask(id string) goErr.GoGoError {
 	err, t := GetTaskDetails(id)
 	if err.GetError() != nil{
@@ -190,7 +199,7 @@ func GetOwnerForTask(taskId string) (goErr.GoGoError, string){
 	return goErr.GoGoError{}, task.OwnerId
 }
 
-//	Only if the new ownerId is already exist, update the task.
+//	Only if the new ownerId is of an exists Person in the DB, update the task.
 func SetTaskOwner(taskId string, ownerID string) goErr.GoGoError{
 	err, _ := GetPerson(ownerID)
 	if err.GetError() != nil{
@@ -203,6 +212,7 @@ func SetTaskOwner(taskId string, ownerID string) goErr.GoGoError{
 	task.OwnerId = ownerID
 	return db.UpdateTask(task)
 }
+//	If the Task id exist in the DB update its status.
 //	if the status value is invalid ('unknown') returning InvalidInput error.
 func SetTaskStatus(taskId string, status string) goErr.GoGoError{
 	err, task := GetTaskDetails(taskId)
