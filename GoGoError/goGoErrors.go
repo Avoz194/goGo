@@ -39,15 +39,15 @@ func (goErr *GoGoError)GetError() error{
         entType := reflect.TypeOf(goErr.EntityType).Name()
         switch goErr.ErrorNum {
         case NoSuchEntityError:
-            return fmt.Errorf("A %s with the %s '%s' does not exist. Error: %w", entType, goErr.ErrorOnKey, goErr.ErrorOnValue, goErr.Err)
+            return fmt.Errorf("A %s with the %s '%s' does not exist.", entType, goErr.ErrorOnKey, goErr.ErrorOnValue)
         case EntityAlreadyExists:
-            return fmt.Errorf("A %s with the %s '%s' already exist. Error: %w", entType, goErr.ErrorOnKey, goErr.ErrorOnValue, goErr.Err)
+            return fmt.Errorf("A %s with the %s '%s' already exist.", entType, goErr.ErrorOnKey, goErr.ErrorOnValue)
         case InvalidInput:
-            return fmt.Errorf("Value '%s' is not a legal %s. Error: %w", goErr.ErrorOnValue, goErr.ErrorOnKey,  goErr.Err)
+            return fmt.Errorf("Value '%s' is not a legal %s.", goErr.ErrorOnValue, goErr.ErrorOnKey)
         case FailedCommitingRequest:
-            return fmt.Errorf("Failed commiting request: %s . Error: %w", goErr.AdditionalMsg, goErr.Err)
+            return fmt.Errorf("Failed commiting request: %s.", goErr.AdditionalMsg)
         case TechnicalFailrue:
-            return fmt.Errorf("Technical Failure occured. %s Error: %w", goErr.AdditionalMsg, goErr.Err)
+            return fmt.Errorf("Technical Failure occured: %s.", goErr.AdditionalMsg)
         }
     }
     return goErr.Err
