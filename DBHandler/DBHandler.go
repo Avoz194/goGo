@@ -5,40 +5,13 @@ import (
 	"fmt"
 	ent "github.com/Avoz194/goGo/Entities"
 	erro "github.com/Avoz194/goGo/GoGoError"
-	"github.com/go-sql-driver/mysql"
-	"log"
-	"os"
 	"time"
 )
 
 const IP = "127.0.0.1:3306"
 const DATABASE_NAME = "goGODB"
 
-func openConnection() (erro.GoGoError,*sql.DB) {
-	cfg := mysql.Config{
-		User:   os.Getenv("GOGODBUSER"),
-		Passwd: os.Getenv("GOGODBPASS"),
-		Net:    "tcp",
-		Addr:   IP,
-		DBName: DATABASE_NAME,
-	}
-	db, err := sql.Open("mysql", cfg.FormatDSN())
-	if err != nil {
-		log.Fatal("Failed To connect to MySQL")
-		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: err}
-		return goErr,nil
-	}
-
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
-		goErr := erro.GoGoError{ErrorNum: erro.TechnicalFailrue, EntityType: erro.GoGoError{}, ErrorOnValue: "", ErrorOnKey: "", AdditionalMsg:"Failed To connect to MySQL.", Err: pingErr}
-		return goErr, nil
-	}
-	return erro.GoGoError{},db
-}
-
-
+//	Returning a FailedCommitingRequest error if the Person's id does not exist.
 func DeletePerson(person ent.Person) erro.GoGoError{
 	goErr,db := openConnection()
 	if goErr.GetError() != nil {
@@ -55,6 +28,7 @@ func DeletePerson(person ent.Person) erro.GoGoError{
 	return erro.GoGoError{}
 }
 
+//	Returning a FailedCommitingRequest error if the Task's id does not exist.
 func DeleteTask(task ent.Task) erro.GoGoError {
 	goErr, db := openConnection()
 	if goErr.GetError() != nil {
@@ -71,6 +45,7 @@ func DeleteTask(task ent.Task) erro.GoGoError {
 	return erro.GoGoError{}
 }
 
+//	Returning a NoSuchEntityError error if the Person's id does not exist.
 func GetPerson(id string) (erro.GoGoError,ent.Person) {
 	goErr, db := openConnection()
 	if goErr.GetError() != nil {
@@ -92,6 +67,7 @@ func GetPerson(id string) (erro.GoGoError,ent.Person) {
 	return erro.GoGoError{},p
 }
 
+//	Returning a NoSuchEntityError error if the Task's id does not exist.
 func GetTask(id string) (erro.GoGoError,ent.Task) {
 	goErr, db := openConnection()
 	if goErr.GetError()!= nil {
@@ -107,11 +83,12 @@ func GetTask(id string) (erro.GoGoError,ent.Task) {
 		goErr = erro.GoGoError{ErrorNum: erro.NoSuchEntityError, EntityType: t,ErrorOnValue: id, ErrorOnKey: "id", Err: err, AdditionalMsg: ""}
 		return goErr, ent.Task{}
 	}
-	t.DueDate = getTime(date)
+	_,t.DueDate = getTime(date)
 	t.SetTaskId(taskID)
 	return erro.GoGoError{},t
 }
 
+//	Returning a EntityAlreadyExists error if the Person's id already exist.
 func AddPerson(p ent.Person) (erro.GoGoError){
 	goErr,db := openConnection()
 	if goErr.GetError()!= nil {
@@ -128,6 +105,7 @@ func AddPerson(p ent.Person) (erro.GoGoError){
 	return erro.GoGoError{}
 }
 
+//	Returning a NoSuchEntityError error if the ownerId does not exist.
 func AddTask(t ent.Task) erro.GoGoError{
 	goErr, db := openConnection()
 	if goErr.GetError()!=nil {
@@ -145,6 +123,7 @@ func AddTask(t ent.Task) erro.GoGoError{
 	return erro.GoGoError{}
 }
 
+//	Returning a FailedCommitingRequest error if the Task could not been update.
 func UpdateTask(t ent.Task) erro.GoGoError{
 	goErr, db := openConnection()
 	if goErr.GetError()!=nil {
@@ -163,6 +142,7 @@ func UpdateTask(t ent.Task) erro.GoGoError{
 	return erro.GoGoError{}
 }
 
+//	Returning a EntityAlreadyExists error if the Person's Email already exist.
 func UpdatePerson(p ent.Person) erro.GoGoError{
 	goErr, db := openConnection()
 	if goErr.GetError()!=nil {
@@ -182,6 +162,10 @@ func UpdatePerson(p ent.Person) erro.GoGoError{
 	return erro.GoGoError{}
 }
 
+//	Get all of the 'active' or 'done' tasks of a Person according to the status value.
+//	return both 'active' and 'done' tasks of a Person if the status value is 'unknown'
+//	first gets the tasks values in 'results' then put each of them in a Task array.
+//	return a FailedCommitingRequest error if could not get the Tasks.
 func GetPersonTasks(p ent.Person, status ent.Status) (erro.GoGoError,[]ent.Task) {
 	goErr, db := openConnection()
 	if goErr.GetError()!=nil {
@@ -190,7 +174,8 @@ func GetPersonTasks(p ent.Person, status ent.Status) (erro.GoGoError,[]ent.Task)
 	var results *sql.Rows
 	var err error
 	defer db.Close()
-	if status == ent.UnkownStatus{
+	//get the tasks values
+	if status == ent.UnknownStatus {
 		results, err = db.Query("SELECT * FROM Tasks where ownerid = ?",p.GetPersonId())
 	}	else{
 		results, err = db.Query("SELECT * FROM Tasks where ownerid = ? AND statusID = ?",p.GetPersonId(), status)
@@ -199,7 +184,7 @@ func GetPersonTasks(p ent.Person, status ent.Status) (erro.GoGoError,[]ent.Task)
 		goErr = erro.GoGoError{ErrorNum: erro.FailedCommitingRequest, EntityType: ent.Person{},ErrorOnValue: p.GetPersonId(), ErrorOnKey: "id", Err: err, AdditionalMsg: fmt.Sprintf("Get Tasks for Person with id '%s'", p.GetPersonId())}
 		return goErr, []ent.Task{}
 	}
-
+	//put the values in Task array.
 	tasksList := []ent.Task{}
 	for results.Next() {
 		var task ent.Task
@@ -211,13 +196,15 @@ func GetPersonTasks(p ent.Person, status ent.Status) (erro.GoGoError,[]ent.Task)
 			goErr = erro.GoGoError{ErrorNum: erro.FailedCommitingRequest, EntityType: ent.Person{},ErrorOnValue: p.GetPersonId(), ErrorOnKey: "id", Err: err, AdditionalMsg: fmt.Sprintf("Get Tasks for Person with id '%s'", p.GetPersonId())}
 			return goErr, []ent.Task{}
 		}
-		task.DueDate = getTime(date)
+		_,task.DueDate = getTime(date)
 		task.SetTaskId(id)
 		tasksList = append(tasksList, task)
 	}
 	return erro.GoGoError{},tasksList
 }
 
+//	first gets the Persons values in 'results' then put each of them in a Person array.
+//	return a FailedCommitingRequest error if could not get the Persons.
 func GetAllPersons() (erro.GoGoError,[]ent.Person) {
 	goErr, db := openConnection()
 	if goErr.GetError()!=nil {
@@ -225,13 +212,13 @@ func GetAllPersons() (erro.GoGoError,[]ent.Person) {
 	}
 
 	defer db.Close()
-
+	//get the persons values
 	results, err := db.Query("SELECT DISTINCT Persons.*, count(Tasks.id) over (partition by Persons.id) as numOfActiveTasks FROM Persons left join Tasks on Persons.id = Tasks.ownerId AND Tasks.statusID = 1")
 	if err != nil {
 		goErr = erro.GoGoError{ErrorNum: erro.FailedCommitingRequest, EntityType: ent.Person{},ErrorOnValue: "", ErrorOnKey: "", Err: err, AdditionalMsg: "Get All Persons"}
 		return goErr, []ent.Person{}
 	}
-
+	// put the values in a Person array.
 	personList := []ent.Person{}
 	for results.Next() {
 		var person ent.Person
@@ -250,10 +237,13 @@ func GetAllPersons() (erro.GoGoError,[]ent.Person) {
 	return erro.GoGoError{},personList
 }
 
-func getTime(date string) time.Time{
+//	return Time value by the format: YYYY-MM-DD.
+//	if the Time format is invalid returning InvalidInput error.
+func getTime(date string) (erro.GoGoError,time.Time){
 	dueDateT, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		panic(err)
+		err := erro.GoGoError{ErrorNum: erro.InvalidInput, EntityType: ent.Task{}, ErrorOnKey: "task dueDate", ErrorOnValue: date}
+		return err, time.Time{}
 	}
-	return dueDateT
+	return erro.GoGoError{},dueDateT
 }

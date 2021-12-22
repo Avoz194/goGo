@@ -4,6 +4,9 @@ import (
 	"github.com/google/uuid"
 )
 
+//	Email: Must be unique.
+//	activeTasks: private. number of all the person's active tasks. Gets the number from the DB.
+//	id: private. Unique id.
 type Person struct {
 	Name		string	`json:"name"`
 	Email 		string	`json:"email"`
@@ -12,6 +15,8 @@ type Person struct {
 	id			string	`json:"id"`
 }
 
+//	Been used only when creating a new Person in the system.
+//	Generate unique id, and activeTasks set by default to 0.
 func CreatePerson(name, email, progLang string) Person {
 	id := uuid.New()
 	return Person{Name: name, Email: email,ProgLang: progLang,activeTasks: 0, id: id.String()}
