@@ -7,7 +7,7 @@ import entities "github.com/Avoz194/goGo/Entities"
 //	in an output to API all the fields will be fill.
 type PersonHolder struct {
 	Name 		string	`json:"name"`
-	Email		string	`json:"emails"`
+	Email		string	`json:"email"`
 	ProgLang	string	`json:"favoriteProgrammingLanguage"`
 	ActiveTasks	int		`json:"activeTaskCount"`
 	Id			string	`json:"id"`
