@@ -2,7 +2,6 @@ package GoGoError
 
 import (
     "fmt"
-    "log"
     "reflect"
 )
 
@@ -35,7 +34,6 @@ type GoGoError struct{
 // GetError returning the goGoError message, according to the ErrorNum.
 func (goErr *GoGoError)GetError() error{
     if goErr.EntityType != nil {
-        log.Println(goErr.Err)
         entType := reflect.TypeOf(goErr.EntityType).Name()
         switch goErr.ErrorNum {
         case NoSuchEntityError:
