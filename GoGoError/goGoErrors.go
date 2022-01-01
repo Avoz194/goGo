@@ -2,6 +2,7 @@ package GoGoError
 
 import (
     "fmt"
+    "log"
     "reflect"
 )
 
@@ -45,7 +46,8 @@ func (goErr *GoGoError)GetError() error{
         case FailedCommitingRequest:
             return fmt.Errorf("Failed commiting request: %s.", goErr.AdditionalMsg)
         case TechnicalFailrue:
-            return fmt.Errorf("Technical Failure occured: %s.", goErr.AdditionalMsg)
+                log.Println(goErr.Err)
+                return fmt.Errorf("Technical Failure occured: %s.", goErr.AdditionalMsg)
         }
     }
     return goErr.Err
